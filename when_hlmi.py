@@ -19,8 +19,6 @@ if USE_NUMBERS == 'Ajeya':
     flop_dollar = [17, 18]              # 90% CI, currently we can purchase 10^X FLOPS for $1
     flop_halv_yrs = [2, 3]              # 90% CI, every X years each FLOP becomes half as expensive to purchase
     pay_hlmi = [8, 11]                  # 90% CI, $10^X in 2022 dollars is the maximum amount someone will pay for producing AI
-    # TODO: GDP growth?
-    # TODO: Increase `pay_hlmi` as a function of year
 elif USE_NUMBERS == 'Peter':
     chance_ai_possible = 0.97
     chance_ai_abandoned = 0.01
@@ -32,8 +30,13 @@ elif USE_NUMBERS == 'Peter':
     flop_halv_yrs = [2, 4]
     pay_hlmi = [8, 12]
 
+# TODO: GDP growth?
+# TODO: Increase `pay_hlmi` as a function of year
 # TODO: API where you can customize the numbers
 # TODO: Documentation for the numbers
+# TODO: Graph parameters w/ ~10 FLOPS per parameter
+# TODO: Graph "Willingness to spend by year", "FLOPS per dollar by year", "Parameters by year", "Data size by year"*, cumulative probability function, probability distribution function
+#### *Graph data size assuming Chinchilla scaling
 
 
 def normal_sample(low, high, interval):
@@ -125,6 +128,3 @@ print(list(zip(percentiles, np.round(np.percentile(hlmi_years, percentiles)))))
 
 import pdb
 pdb.set_trace()
-
-
-# ~10 FLOPS per parameter
