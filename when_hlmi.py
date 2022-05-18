@@ -30,14 +30,6 @@ elif USE_NUMBERS == 'Peter':
     flop_halv_yrs = [2, 4]
     pay_hlmi = [8, 12]
 
-# TODO: GDP growth?
-# TODO: Increase `pay_hlmi` as a function of year
-# TODO: API where you can customize the numbers
-# TODO: Documentation for the numbers
-# TODO: Graph parameters w/ ~10 FLOPS per parameter
-# TODO: Graph "Willingness to spend by year", "FLOPS per dollar by year", "Parameters by year", "Data size by year"*, cumulative probability function, probability distribution function
-#### *Graph data size assuming Chinchilla scaling
-
 
 def normal_sample(low, high, interval):
     if (low > high) or (high < low):
@@ -125,6 +117,9 @@ for r in range(RUNS):
 
 percentiles = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95]
 print(list(zip(percentiles, np.round(np.percentile(hlmi_years, percentiles)))))
+
+# NOTE: Ajeya's numbers should output something very close to `[(10, 2030.0), (20, 2035.0),
+# (30, 2040.0), (40, 2045.0), (50, 2053.0), (60, 2063.0), (70, 2073.0), (80, >2100.0)`
 
 import pdb
 pdb.set_trace()
