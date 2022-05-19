@@ -4,6 +4,7 @@
 * Documentation for the numbers
 * Graph parameters w/ ~10 FLOPS per parameter
 * Graph "Willingness to spend by year", "FLOPS per dollar by year", "Parameters by year", "Data size by year"[^1], cumulative probability function, probability distribution function
+* Have `algo_dbl_yrs` and `flop_halv_yrs` get slower as a function of time
 
 -
 
