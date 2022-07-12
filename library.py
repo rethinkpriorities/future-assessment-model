@@ -114,9 +114,21 @@ def format_gb(gb):
         return str(pb) + ' PB'
     
 
-def get_percentiles(data, percentiles=[5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95], reverse=False):
+def get_percentiles(data, percentiles=[5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95], reverse=False, digits=None):
     percentile_labels = list(reversed(percentiles)) if reverse else percentiles
-    return dict(list(zip(percentile_labels, np.percentile(data, percentiles))))
+    percentiles = np.percentile(data, percentiles)
+    if digits is not None:
+        percentiles = np.round(percentiles, digits)
+    return dict(list(zip(percentile_labels, percentiles)))
+
+
+def get_log_percentiles(data, percentiles, reverse=False, display=True, digits=1):
+    percentiles = get_percentiles(data, percentiles=percentiles, reverse=reverse, digits=digits)
+    if display:
+        return dict([(k, '10^{} (~{})'.format(np.round(np.log10(v), digits), numerize(np.log10(v)))) for k, v in percentiles.items()])
+    else:
+        return dict([(k, np.round(np.log10(v), digits)) for k, v in percentiles.items()])
+
 
 
 def savitzky_golay(y, window_size, order, deriv=0, rate=1):
