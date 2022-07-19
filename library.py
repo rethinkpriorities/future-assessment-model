@@ -74,7 +74,7 @@ def sample(var, allow_negative=False, credibility=0.9):
 
 
 def event_occurs(p):
-	return random.random() < p
+    return random.random() < p
 
 
 def numerize(oom_num):
@@ -129,6 +129,15 @@ def get_log_percentiles(data, percentiles, reverse=False, display=True, digits=1
     else:
         return dict([(k, np.round(np.log10(v), digits)) for k, v in percentiles.items()])
 
+
+def plot_tai(plt, years, cost_of_tai_collector, willingness_collector):
+    cost = np.log10(np.array(cost_of_tai_collector))
+    willingness = np.log10(np.array(willingness_collector))
+    plt.plot(years[:len(cost)], cost, label='Cost of TAI')
+    plt.plot(years[:len(willingness)], willingness, label='Willingness to pay for TAI')
+    plt.legend()
+    plt.ylabel('log $')
+    return plt
 
 
 def savitzky_golay(y, window_size, order, deriv=0, rate=1):
