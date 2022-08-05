@@ -35,35 +35,50 @@ def lognormal_sample(low, high, interval):
 def norm(x, y):
     return [x, y]
 
-
 def norm_lclip(x, y):
     return [x, y, 'norm-lclip']
-
 
 def lognorm(x, y):
     return [x, y, 'log']
 
-
 def lognorm_lclip(x, y):
     return [x, y, 'log-lclip']
+
+def weighted_lognorm(logs, weights):
+    return [logs, weights, 'weighted_log']
 
 
 def sample(var, allow_negative=False, credibility=0.9):
     if len(var) > 2:
         if var[2] == 'log':
             out = lognormal_sample(var[0], var[1], credibility)
+
+        elif var[2] == 'weighted_log':
+            weights = var[1]
+            sum_weights = sum(weights)
+            if sum_weights <= 0.99 or sum_weights >= 1.01:
+                raise ValueError('weighted_log weights don\'t sum to 1 - they sum to {}'.format(sum_weights))
+            log_result = 0
+            for i, log_data in enumerate(var[0]):
+                log_value = lognormal_sample(log_data[0], log_data[1], credibility)
+                weight = weights[i]
+                log_result += log_value * weight
+            return log_result
+
         elif var[2] == 'log-lclip':
             out = lognormal_sample(var[0], var[1], credibility)
             if out < var[0]:
                 return var[0]
             else:
                 return out
+
         elif var[2] == 'norm-lclip':
             out = normal_sample(var[0], var[1], credibility)
             if out < var[0]:
                 return var[0]
             else:
                 return out
+
         else:
             raise ValueError
     else:
