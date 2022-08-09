@@ -30,28 +30,70 @@ def lognormal_sample(low, high, interval):
         normed_sigma = stats.norm.ppf(cdf_value)
         sigma = (log_high - mu) / normed_sigma
         return np.random.lognormal(mu, sigma)
+
+
+def t_sample(low, high, t, interval):
+    if (low > high) or (high < low):
+        raise ValueError
+    if low == high:
+        return low
+    else:
+        mu = (high + low) / 2
+        rangex = (high - low) / 2
+        return np.random.standard_t(t) * rangex * 0.6/interval + mu
+
+
+def log_t_sample(low, high, t, interval):
+    if (low > high) or (high < low):
+        raise ValueError
+    if low == high:
+        return low
+    else:
+        log_low = np.log(low)
+        log_high = np.log(high)
+        mu = (log_high + log_low) / 2
+        rangex = (log_high - log_low) / 2
+        return np.exp(np.random.standard_t(t) * rangex * 0.6/interval + mu)
     
 
-def norm(x, y):
-    return [x, y]
+def norm(x, y, lclip=None):
+    return [x, y, 'norm', lclip]
 
 def norm_lclip(x, y):
-    return [x, y, 'norm-lclip']
+    return [x, y, 'norm', x]
 
-def lognorm(x, y):
-    return [x, y, 'log']
+def lognorm(x, y, lclip=None):
+    return [x, y, 'log', lclip]
 
 def lognorm_lclip(x, y):
-    return [x, y, 'log-lclip']
+    return [x, y, 'log', x]
 
 def weighted_lognorm(logs, weights):
     return [logs, weights, 'weighted_log']
 
+def distributed_lognorm(logs, weights):
+    return [logs, weights, 'distributed_log']
+
+def tdist(x, y, t, lclip=None, rclip=None):
+    return [x, y, 'tdist', t, lclip, rclip]
+
+def log_tdist(x, y, t, lclip=None, rclip=None):
+    return [x, y, 'log-tdist', t, lclip, rclip]
+
 
 def sample(var, allow_negative=False, credibility=0.9):
     if len(var) > 2:
-        if var[2] == 'log':
+        if var[2] == 'norm':
+            out = normal_sample(var[0], var[1], credibility)
+            lclip = var[3]
+            if lclip and out < lclip:
+                out = lclip
+
+        elif var[2] == 'log':
             out = lognormal_sample(var[0], var[1], credibility)
+            lclip = var[3]
+            if lclip and out < lclip:
+                out = lclip
 
         elif var[2] == 'weighted_log':
             weights = var[1]
@@ -65,19 +107,35 @@ def sample(var, allow_negative=False, credibility=0.9):
                 log_result += log_value * weight
             return log_result
 
-        elif var[2] == 'log-lclip':
-            out = lognormal_sample(var[0], var[1], credibility)
-            if out < var[0]:
-                return var[0]
-            else:
-                return out
+        elif var[2] == 'distributed_log':
+            weights = var[1]
+            sum_weights = sum(weights)
+            if sum_weights <= 0.99 or sum_weights >= 1.01:
+                raise ValueError('distributed_log weights don\'t sum to 1 - they sum to {}'.format(sum_weights))
+            r_ = random.random()
+            weights = np.cumsum(weights)
+            for i, log_data in enumerate(var[0]):
+                weight = weights[i]
+                if r_ <= weight:
+                    return lognormal_sample(log_data[0], log_data[1], credibility)
 
-        elif var[2] == 'norm-lclip':
-            out = normal_sample(var[0], var[1], credibility)
-            if out < var[0]:
-                return var[0]
-            else:
-                return out
+        elif var[2] == 'tdist':
+            out = t_sample(var[0], var[1], var[3], credibility)
+            lclip = var[4]
+            rclip = var[5]
+            if lclip and out < lclip:
+                out = lclip
+            if rclip and out > rclip:
+                out = rclip
+
+        elif var[2] == 'log-tdist':
+            out = log_t_sample(var[0], var[1], var[3], credibility)
+            lclip = var[4]
+            rclip = var[5]
+            if lclip and out < lclip:
+                out = lclip
+            if rclip and out > rclip:
+                out = rclip
 
         else:
             raise ValueError
@@ -129,7 +187,7 @@ def format_gb(gb):
         return str(pb) + ' PB'
     
 
-def get_percentiles(data, percentiles=[5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95], reverse=False, digits=None):
+def get_percentiles(data, percentiles=[1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99], reverse=False, digits=None):
     percentile_labels = list(reversed(percentiles)) if reverse else percentiles
     percentiles = np.percentile(data, percentiles)
     if digits is not None:
