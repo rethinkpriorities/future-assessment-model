@@ -100,24 +100,31 @@ def sample(var, allow_negative=False, credibility=0.9):
             sum_weights = sum(weights)
             if sum_weights <= 0.99 or sum_weights >= 1.01:
                 raise ValueError('weighted_log weights don\'t sum to 1 - they sum to {}'.format(sum_weights))
+            if len(weights) != len(var[0]):
+                raise ValueError('weighted_log weights and distributions not same length')
             log_result = 0
             for i, log_data in enumerate(var[0]):
                 log_value = lognormal_sample(log_data[0], log_data[1], credibility)
                 weight = weights[i]
                 log_result += log_value * weight
-            return log_result
+            out = log_result
 
         elif var[2] == 'distributed_log':
             weights = var[1]
             sum_weights = sum(weights)
             if sum_weights <= 0.99 or sum_weights >= 1.01:
                 raise ValueError('distributed_log weights don\'t sum to 1 - they sum to {}'.format(sum_weights))
+            if len(weights) != len(var[0]):
+                raise ValueError('distributed_log weights and distributions not same length')
             r_ = random.random()
             weights = np.cumsum(weights)
+            done = False
             for i, log_data in enumerate(var[0]):
-                weight = weights[i]
-                if r_ <= weight:
-                    return lognormal_sample(log_data[0], log_data[1], credibility)
+                if not done:
+                    weight = weights[i]
+                    if r_ <= weight:
+                        out = lognormal_sample(log_data[0], log_data[1], credibility)
+                        done = True
 
         elif var[2] == 'tdist':
             out = t_sample(var[0], var[1], var[3], credibility)
