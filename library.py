@@ -82,7 +82,13 @@ def log_tdist(x, y, t, lclip=None, rclip=None):
     return [x, y, 'log-tdist', t, lclip, rclip]
 
 
-def sample(var, credibility=0.9):
+def sample(var, credibility=0.9, n=1):
+    n = int(n)
+    if n > 1:
+        return np.array([sample(var) for _ in range(n)])
+    elif n <= 0:
+        return ValueError('n must be >= 1')
+
     if callable(var):
         return var()
 
