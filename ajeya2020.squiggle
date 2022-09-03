@@ -44,7 +44,6 @@ nn_anchor(h) = {
            params, ref_params, ref_params_samples)
 }
 
-gpt_nn = nn_anchor(0)
 short_nn = nn_anchor(0 to 3)
 medium_nn = nn_anchor(3 to 6)
 long_nn = nn_anchor(6 to 9)
@@ -148,15 +147,14 @@ flop_to_make_tai_at_y(y) = {
 mixed(y) = cdf(flop_to_make_tai_at_y(y), logflop_at_y(y))
 
 {
-    'FLOP to TAI at Y': flop_to_make_tai_at_y(2030),
-    'Available FLOP at Y': logflop_at_y(2030),
-    'Log FLOP per $ at Y': log10(flop_per_$(2030)),
-    'Log Spend at Y': log10(spend(2030)),
-    'Initial FLOP': mixed_PDF,
     '2030': mixed(2030),
     '2036': mixed(2036),
     '2040': mixed(2040),
     '2050': mixed(2050),
+    '2060': mixed(2060),
+    '2070': mixed(2070),
+    '2080': mixed(2080),
+    '2090': mixed(2090),
     '2100': mixed(2100)
 }
 
