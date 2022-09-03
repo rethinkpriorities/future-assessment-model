@@ -9,11 +9,15 @@
 start_year = 2025
 end_year = 2100
 
-minx(n, max) = SampleSet.map(n, { |x| if x > max then max else x })
-maxx(n, min) = SampleSet.map(n, { |x| if x < min then min else x })
+minx(n, max) = { if n > max then max else n }
+maxx(n, min) = { if n < min then min else n }
 bound(x, min, max) = maxx(minx(x, max), min)
 
-bayes_update_against_low_end_flop(anchor) = anchor |> truncateLeft(24)
+sminx(n, max) = SampleSet.map(n, minx)
+smaxx(n, min) = SampleSet.map(n, maxx)
+sbound(x, min, max) = smaxx(sminx(x, max), min)
+
+bayes_update_against_low_end_flop(anchor) = anchor |> truncateLeft(26)
 
 anchor(brain, efficiency, transformative_vs_human, horizon_length,
        scaling_exponent, params, ref_params, ref_params_samples) = {
@@ -86,13 +90,13 @@ mixed_PDF = mixture(
     genome_anchor,
     no_path_anchor,
     [
-        .105,
-        .055,
-        .205,
-        .305,
-        .155,
-        .105,
-        .075
+        .11,
+        .06,
+        .21,
+        .31,
+        .16,
+        .11,
+        .04
     ]
 )
 
@@ -128,15 +132,18 @@ flop(y) = {
 
 logflop_at_y(y) = log10(flop(y))
 
-algo_progress_reduction_at_y(y, f) = {
+algo_progress_reduce_at_y_for_f(y, f) = {
     max_algo_reduction = bound(2 + (f - 32) / 4, 2, 5)
     algo_halving_time = bound(3.5 - (f - 29) / 4, 2, 3.5)
     t = y - start_year
     r = (exp((log(2) / algo_halving_time) * t)) / (1 + 1 / max_algo_reduction * exp(log(2) / algo_halving_time * t))
-    SampleSet.map(r, { |x| if x > 5 then 5 else x })
+    f - r
 }
 
-flop_to_make_tai_at_y(y) = { mixed_PDF - algo_progress_reduction_at_y(y, mixed_PDF) }
+flop_to_make_tai_at_y(y) = {
+    SampleSet.map(SampleSet.fromDist(mixed_PDF),
+                  { |f| algo_progress_reduce_at_y_for_f(y, f) })
+}
 
 mixed(y) = cdf(flop_to_make_tai_at_y(y), logflop_at_y(y))
 
