@@ -3,6 +3,14 @@ import matplotlib.pyplot as plt
 import squigglepy as sq
 
 
+def logistic_curve(x, slope, midpoint, maximum, minimum):
+    limit = maximum - minimum
+    return (limit / (1 + math.exp(-slope * (x - midpoint)))) + minimum
+
+def generalized_logistic_curve(x, slope, shift, push, maximum, minimum):
+     return minimum + ((maximum - minimum) / ((1 + shift * math.exp(-slope * x)) ** (1/push)))
+
+
 def plot_tai(plt, years, cost_of_tai_collector, willingness_collector):
     cost = np.log10(np.array(cost_of_tai_collector))
     willingness = np.log10(np.array(willingness_collector))
