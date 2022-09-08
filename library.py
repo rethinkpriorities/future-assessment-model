@@ -91,6 +91,10 @@ def savitzky_golay(y, window_size, order, deriv=0, rate=1):
     return np.convolve( m[::-1], y, mode='valid')
 
 
+def log_flop_to_petaflop_sdays(log_flop):
+    return round((10 ** log_flop) / (8.64 * (10 ** 19)))
+
+
 K = sq.thousand()
 M = sq.million()
 B = sq.billion()
