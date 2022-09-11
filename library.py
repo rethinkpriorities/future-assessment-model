@@ -3,10 +3,6 @@ import matplotlib.pyplot as plt
 import squigglepy as sq
 
 
-def logistic_curve(x, slope, midpoint, maximum, minimum):
-    limit = maximum - minimum
-    return (limit / (1 + math.exp(-slope * (x - midpoint)))) + minimum
-
 def generalized_logistic_curve(x, slope, shift, push, maximum, minimum):
      return minimum + ((maximum - minimum) / ((1 + shift * math.exp(-slope * x)) ** (1/push)))
 
