@@ -3,6 +3,46 @@ import matplotlib.pyplot as plt
 import squigglepy as sq
 
 
+def numerize(num):
+    scales = {'thousand': 1000,
+              'million': 10 ** 6,
+              'billion': 10 ** 9,
+              'trillion': 10 ** 12,
+              'quadrillion': 10 ** 15,
+              'quintillion': 10 ** 18,
+              'sextillion': 10 ** 21,
+              'septillion': 10 ** 24,
+              'octillion': 10 ** 27,
+              'nonillion': 10 ** 30,
+              'decillion': 10 ** 33}
+
+    if num < 1000:
+        return num
+
+    for scale_name, scale_value in scales.items():
+        if num < scale_value * 1000:
+            return str(int(round(num / scale_value))) + ' ' + scale_name
+
+    return str(numerize(num / 10 ** 33)) + ' decillion'
+
+
+def format_gb(gb):
+    if gb >= 1000:
+        tb = np.round(gb / 1000)
+    else:
+        return str(gb) + ' GB'
+
+    if tb >= 1000:
+        pb = np.round(tb / 1000)
+    else:
+        return str(tb) + ' TB'
+
+    if pb >= 10000:
+        return numerize(math.log10(pb)) + ' PB'
+    else:
+        return str(pb) + ' PB'
+
+
 def generalized_logistic_curve(x, slope, shift, push, maximum, minimum):
      return minimum + ((maximum - minimum) / ((1 + shift * math.exp(-slope * x)) ** (1/push)))
 
