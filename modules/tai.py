@@ -6,7 +6,7 @@ def tai_scenarios_module(y, state, verbose):
         if (sq.event_occurs(p_make_agent_tai) or state['tai_type'] == 'agent') and state['tai_type'] != 'tool':
             # TODO: Do we want to re-roll the possibility of making agentic TAI in future years?
             if sq.event_occurs(p_tai_intentional_misuse(state['war'])):
-                # TODO: Parameterize the 0.5
+                # TODO: Parameterize the 0.5 (Who gets to TAI first affecting risk)
                 # TODO: May depend on who the war is between?
                 if 0.5 * sq.event_occurs(p_alignment_solved(state['war'], y - CURRENT_YEAR, first_attempt=not state['tai'], verbose=verbose)):
                     if verbose:
