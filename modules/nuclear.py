@@ -39,7 +39,7 @@ def nuclear_scenarios_module(y, state, verbose):
             print('{}: North Korea uses a nuke first strike!'.format(y))
         state['nuclear_weapon_used'] = True
 
-    if not state['terminate'] and sq.event(p_china_uses_nuke(peace)):
+    if not state['terminate'] and sq.event(p_china_uses_nuke(peace, year)):
         if verbose:
             print('{}: China uses a nuke first strike (outside of a great power war)!'.format(y))
         state['nuclear_weapon_used'] = True
