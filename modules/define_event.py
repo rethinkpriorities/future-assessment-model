@@ -8,11 +8,12 @@ extinctions = ['xrisk_full_unaligned_tai_extinction', 'xrisk_nukes_war', 'xrisk_
                'xrisk_bio_nonstate', 'xrisk_supervolcano']
 
 
-def define_event(verbose=False):
+def define_event(verbosity=0):
     state = {'category': 'boring', 'tai': False, 'tai_year': None, 'tai_type': None,
-             'nano': False, 'wars': [], 'war': False, 'war_start_year': None, 'war_end_year': None,
-             'russia_nuke_first': False, 'war_belligerents': None, 'peace_until': None,
-             'engineered_pathogen': False, 'natural_pathogen': False, 'averted_misalignment': False,
+             'nano': False, 'wars': [], 'war': False, 'war_start_year': None,
+             'war_end_year': None, 'russia_nuke_first': False, 'china_nuke_first': False,
+             'war_belligerents': None, 'peace_until': None, 'engineered_pathogen': False,
+             'natural_pathogen': False, 'averted_misalignment': False,
              'nuclear_weapon_used': False, 'catastrophe': [], 'recent_catastrophe_year': None,
              'terminate': False, 'final_year': None, 'double_catastrophe_xrisk': None}
     allowed_state_keys = list(state.keys())
@@ -23,7 +24,7 @@ def define_event(verbose=False):
     if use_efficiency_based_algo_reduction:
         efficiency_ = sq.sample(efficiency)
         tai_flop_size_ = sq.sample(lambda: tai_flop_size(efficiency=sq.const(efficiency_),
-                                                         debug=verbose))
+                                                         debug=verbosity > 1))
     else:
         tai_flop_size_ = sq.sample(tai_flop_size)
 
@@ -69,11 +70,11 @@ def define_event(verbose=False):
     
     queue_tai_year = 99999
     plt.ioff()
-    if verbose:
+    if verbosity > 0:
         cost_of_tai_collector = []
         willingness_collector = []
     
-    if verbose:
+    if verbosity > 1:
         print('### TAI TIMELINE VARIABLES ###')
         print('It takes {} log FLOPs (~{}) for transformative capabilities.'.format(np.round(tai_flop_size_, 1),
                                                                                     numerize(10 ** tai_flop_size_)))
@@ -107,26 +108,27 @@ def define_event(verbose=False):
         n_catastrophes = len(state['catastrophe'])
         
         # Run modules
+        # TODO: Run in random order?
         if not state['terminate']:
-            state = tai_scenarios_module(y, state, verbose)
+            state = tai_scenarios_module(y, state, verbosity > 0)
         
         if not state['terminate']:
-            state = great_power_war_scenarios_module(y, state, verbose)
+            state = great_power_war_scenarios_module(y, state, verbosity > 0)
         
         if not state['terminate']:
-            state = nuclear_scenarios_module(y, state, verbose)
+            state = bio_scenarios_module(y, state, verbosity > 0)
         
         if not state['terminate']:
-            state = bio_scenarios_module(y, state, verbose)
+            state = nuclear_scenarios_module(y, state, verbosity > 0)
         
         if not state['terminate']:
-            state = nano_scenarios_module(y, state, verbose)
+            state = nano_scenarios_module(y, state, verbosity > 0)
         
         if not state['terminate']:
-            state = supervolcano_scenarios_module(y, state, verbose)
+            state = supervolcano_scenarios_module(y, state, verbosity > 0)
         
         if not state['terminate']:
-            state = unknown_unknown_scenarios_module(y, state, verbose)
+            state = unknown_unknown_scenarios_module(y, state, verbosity > 0)
         
         # Check for double-dip catastrophe -> x-risk
         # TODO: Move to module?
@@ -136,7 +138,7 @@ def define_event(verbose=False):
             if prior_catastrophe_within_range and sq.event(p_extinction_from_double_catastrophe):
                 previous_catastrophe = state['catastrophe'][-2]
                 current_catastrophe = state['catastrophe'][-1]
-                if verbose:
+                if verbosity > 0:
                     print('{}: ...XRISK from double catastrophe ({} -> {})'.format(y, previous_catastrophe, current_catastrophe))
                 
                 if current_catastrophe == 'averting_intentional_tai' or current_catastrophe == 'averting_misaligned_tai':
@@ -162,30 +164,30 @@ def define_event(verbose=False):
                 tai_catastrophe_delay_yrs_ = int(round(sq.sample(tai_catastrophe_delay_yrs)))
                 if nonscaling_countdown > 0:
                     nonscaling_countdown += tai_catastrophe_delay_yrs_
-                    if verbose:
+                    if verbosity > 1:
                         print('Catastrophe adds {} yrs to nonscaling delay'.format(tai_catastrophe_delay_yrs_))
-                elif verbose:
+                elif verbosity > 1:
                     print('Catastrophe delays TAI progress by {} years'.format(tai_catastrophe_delay_yrs_))
                 
             if state['war'] and y == state['war_start_year']:
                 old_max_gdp_frac_ = max_gdp_frac_
                 max_gdp_frac_ = max_gdp_frac(war=True)
-                if verbose:
+                if verbosity > 1:
                     print('Due to war, our willingness to pay for TAI has moved from {}% of GDP to {}% of GDP'.format(round(old_max_gdp_frac_, 5),
                                                                                                                       round(max_gdp_frac_, 5)))
                 if state['war_belligerents'] == 'US/China' and y < tai_china_war_delay_end_year:
                     tai_china_war_delay_yrs_ = int(round(sq.sample(tai_china_war_delay_yrs)))
                     if nonscaling_countdown > 0:
                         nonscaling_countdown += tai_china_war_delay_yrs_
-                        if verbose:
+                        if verbosity > 1:
                             print('War with China adds {} yrs to nonscaling delay'.format(tai_china_war_delay_yrs_))
-                    elif verbose:
+                    elif verbosity > 1:
                         print('Due to war with China, TAI progress is delayed {} years'.format(tai_china_war_delay_yrs_))
             
             if not state['war'] and y == state['war_end_year']:
                 old_max_gdp_frac_ = max_gdp_frac_
                 max_gdp_frac_ = max_gdp_frac(war=False)
-                if verbose:
+                if verbosity > 1:
                     print('Due to war ending, our willingness to pay for TAI has moved from {}% of GDP to {}% of GDP'.format(round(old_max_gdp_frac_, 5),
                                                                                                                              round(max_gdp_frac_, 5)))
                     
@@ -205,7 +207,7 @@ def define_event(verbose=False):
             y_relative = y_relative - tai_catastrophe_delay_yrs__ if tai_catastrophe_delay_yrs__ else y_relative
             y_relative = y_relative - tai_china_war_delay_yrs__ if tai_china_war_delay_yrs__ else y_relative
 
-            if verbose == 2:
+            if verbosity > 2:
                 print('- Year is {} (normal relative year is {}, adjusted relative year is {})'.format(y,
                                                                                                         y - CURRENT_YEAR,
                                                                                                         y_relative))
@@ -239,13 +241,13 @@ def define_event(verbose=False):
             if willingness_ > 10 ** 200:
                 flops_per_dollar_ = int(flops_per_dollar_)
 
-            if verbose:
+            if verbosity > 0:
                 cost_of_tai_collector.append(cost_of_tai_)
                 willingness_collector.append(willingness_)
 
             total_compute_ = willingness_ * flops_per_dollar_
 
-            if verbose == 2:
+            if verbosity > 2:
                 out_str = (' --- {} max log FLOP ({}) available - TAI takes {} log FLOP ({}) - ' +
                            'log $ {} to buy TAI ({}) vs. willingness to pay log $ {} ({}) - {} log FLOPS per $ ({})')
                 print(out_str.format(np.round(math.log10(total_compute_), 1),
@@ -265,7 +267,7 @@ def define_event(verbose=False):
             else:
                 spend_tai_years = cost_of_tai_ / willingness_
 
-            if not is_nonscaling_issue and queue_tai_year < 99999 and verbose == 2:
+            if not is_nonscaling_issue and queue_tai_year < 99999 and verbosity > 2:
                 print('-$- {}/{}'.format(y, queue_tai_year))
             if (cost_of_tai_ * willingness_ramp_) <= willingness_ or y >= queue_tai_year:
                 if is_nonscaling_issue is None:
@@ -275,24 +277,24 @@ def define_event(verbose=False):
                                                              max_year=nonscaling_issue_bottom_year_)
                     is_nonscaling_issue = sq.event(p_nonscaling_delay_)
                     nonscaling_countdown = nonscaling_delay_
-                    if verbose == 2:
+                    if verbosity > 2:
                         print('-- {} p_nonscaling_issue={}'.format('Nonscaling delay occured' if is_nonscaling_issue else 'Nonscaling issue did not occur',
                                                                    np.round(p_nonscaling_delay_, 4)))
 
                 if not is_nonscaling_issue or nonscaling_countdown <= 0.1:
-                    if verbose:
+                    if verbosity > 0:
                         print('--- /!\ TAI CREATED in {}'.format(y))
                         plot_tai(plt, years, cost_of_tai_collector, willingness_collector).show()
                     state['tai'] = True
                     state['tai_year'] = y
                 else:
-                    if verbose == 2:
+                    if verbosity > 2:
                         print('{}: /!\ FLOPs for TAI sufficient but needs {} more years to solve non-scaling issues'.format(y, np.round(nonscaling_countdown, 1)))
                     nonscaling_countdown -= 1
             elif (not is_nonscaling_issue and willingness_spend_horizon_ > 1 and
                   spend_tai_years <= willingness_spend_horizon_ and y + math.ceil(spend_tai_years) < queue_tai_year):
                 queue_tai_year = y + math.ceil(spend_tai_years)
-                if verbose == 2:
+                if verbosity > 2:
                     print('-$- We have enough spend to make TAI in {} years (in {}) if sustained.'.format(math.ceil(spend_tai_years),
                                                                                                           queue_tai_year))
 
@@ -310,11 +312,13 @@ def define_event(verbose=False):
             
     ## Boring future if MAX_YEAR is reached with no termination
     if not state['terminate']:
-        if verbose:
+        if verbosity > 0:
             print('...Boring future')
+            if not state['tai']:
+                plot_tai(plt, years, cost_of_tai_collector, willingness_collector).show()
         state['final_year'] = '>{}'.format(y)
 
-    if verbose:
+    if verbosity > 0:
         print('-')
         print('-')
     
