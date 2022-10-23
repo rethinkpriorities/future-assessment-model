@@ -7,7 +7,7 @@ def great_power_war_scenarios_module(y, state, verbose):
             print('{}: WAR!!! (US vs. Russia)'.format(y))
         state['war'] = True
         state['war_start_year'] = y
-        war_length_ = int(round(sq.sample(war_length)))
+        war_length_ = int(round(~war_length))
         state['war_end_year'] = war_length_ + y
         state['war_belligerents'] = 'US/Russia'
         state['wars'].append({'belligerents': state['war_belligerents'],
@@ -22,7 +22,7 @@ def great_power_war_scenarios_module(y, state, verbose):
             print('{}: WAR!!! (US vs. China)'.format(y))
         state['war'] = True
         state['war_start_year'] = y
-        war_length_ = int(round(sq.sample(war_length)))
+        war_length_ = int(round(~war_length))
         state['war_end_year'] = war_length_ + y
         state['war_belligerents'] = 'US/China'
         state['wars'].append({'belligerents': state['war_belligerents'],
@@ -35,7 +35,7 @@ def great_power_war_scenarios_module(y, state, verbose):
             print('{}: WAR!!! (Other)'.format(y))
         state['war'] = True
         state['war_start_year'] = y
-        war_length_ = int(round(sq.sample(war_length)))
+        war_length_ = int(round(~war_length))
         state['war_end_year'] = war_length_ + y
         state['war_belligerents'] = 'Other'
         state['wars'].append({'belligerents': state['war_belligerents'],
@@ -48,7 +48,7 @@ def great_power_war_scenarios_module(y, state, verbose):
             print('{}: War ends :)'.format(y))
         state['war'] = False
         state['war_belligerents'] = None
-        peace_length_ = int(round(sq.sample(peace_length)))
+        peace_length_ = int(round(~peace_length))
         state['peace_until'] = y + peace_length_
         
     return state
