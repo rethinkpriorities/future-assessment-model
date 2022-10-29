@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import matplotlib.pyplot as plt
 import squigglepy as sq
@@ -129,3 +131,33 @@ def savitzky_golay(y, window_size, order, deriv=0, rate=1):
 
 def log_flop_to_petaflop_sdays(log_flop):
     return round((10 ** log_flop) / (8.64 * (10 ** 19)))
+
+
+def _mark_time(start, expected_sec=None, label=None,
+               tolerance_ratio=1.05, tolerance_ms_threshold=5):
+    end = time.time()
+    delta_sec = end - start
+    use_delta = delta_sec
+    expected = expected_sec
+    delta_label = 'sec'
+    if delta_sec < 1:
+        delta_ms = delta_sec * 1000
+        expected = expected_sec * 1000 if expected_sec is not None else None
+        use_delta = delta_ms
+        delta_label = 'ms'
+    use_delta = round(use_delta, 2)
+    out = '...{} in {}{}'.format(label, use_delta, delta_label)
+    if expected_sec is not None:
+        out += ' (expected ~{}{})'.format(expected, delta_label)
+    print(out)
+
+    deviation = None
+    if expected is not None:
+        if delta_label == 'ms':
+            deviation = not _within(use_delta, expected, tolerance_ratio, tolerance_ms_threshold)
+        else:
+            deviation = not _within(use_delta, expected, tolerance_ratio)
+        if deviation:
+            print('!!! WARNING: Unexpected timing deviation')
+
+    return {'timing(sec)': delta_sec, 'deviation': deviation}
