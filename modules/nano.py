@@ -1,7 +1,7 @@
 def nano_scenarios_module(y, state, verbose):
-    if sq.event_occurs(p_nanotech_possible(y - CURRENT_YEAR)) and not state['nano']:
+    if sq.event(p_nanotech_possible(y - CURRENT_YEAR)) and not state['nano']:
         state['nano'] = True
-        if sq.event_occurs(p_nanotech_is_xrisk):
+        if sq.event(p_nanotech_is_xrisk):
             if verbose:
                 print('{}: ...XRISK from nanotech :('.format(y))
             state['category'] = 'xrisk_nanotech'

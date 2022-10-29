@@ -1,7 +1,7 @@
 def great_power_war_scenarios_module(y, state, verbose):
     peace = y < state['peace_until'] if state['peace_until'] is not None else False
     
-    if not state['war'] and (sq.event_occurs(p_great_power_war_us_russia_without_nuke_first(peace, y - CURRENT_YEAR)) or
+    if not state['war'] and (sq.event(p_great_power_war_us_russia_without_nuke_first(peace, y - CURRENT_YEAR)) or
                              state['russia_nuke_first']):
         if verbose:
             print('{}: WAR!!! (US vs. Russia)'.format(y))
@@ -16,7 +16,7 @@ def great_power_war_scenarios_module(y, state, verbose):
                               'war_length': war_length_})
         state['russia_nuke_first'] = False
         
-    elif not state['war'] and (sq.event_occurs(p_great_power_war_us_china(peace, y - CURRENT_YEAR)) or
+    elif not state['war'] and (sq.event(p_great_power_war_us_china(peace, y - CURRENT_YEAR)) or
                                state['china_nuke_first']):
         if verbose:
             print('{}: WAR!!! (US vs. China)'.format(y))
@@ -30,7 +30,7 @@ def great_power_war_scenarios_module(y, state, verbose):
                               'end_year': state['war_end_year'],
                               'war_length': war_length_})
     
-    elif sq.event_occurs(p_great_power_war_other(peace, y - CURRENT_YEAR)) and not state['war']:
+    elif sq.event(p_great_power_war_other(peace, y - CURRENT_YEAR)) and not state['war']:
         if verbose:
             print('{}: WAR!!! (Other)'.format(y))
         state['war'] = True

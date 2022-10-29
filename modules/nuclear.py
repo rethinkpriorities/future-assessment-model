@@ -1,10 +1,10 @@
 def nuclear_scenarios_module(y, state, verbose):
     peace = y < state['peace_until'] if state['peace_until'] is not None else False
-    if sq.event_occurs(p_nuclear_accident(state['war'], y - CURRENT_YEAR)):
+    if sq.event(p_nuclear_accident(state['war'], y - CURRENT_YEAR)):
         if sq.event(p_nuclear_accident_becomes_exchange(state['war'])):
             state['nuclear_weapon_used'] = True
-            if sq.event_occurs(p_catastrophe_from_nuclear_exchange(state['war'])):
-                if sq.event_occurs(p_xrisk_from_nuclear_catastrophe):
+            if sq.event(p_catastrophe_from_nuclear_exchange(state['war'])):
+                if sq.event(p_xrisk_from_nuclear_catastrophe):
                     if verbose:
                         print('{}: ...XRISK from nukes (accidental exchange) :('.format(y))
                     state['category'] = 'xrisk_nukes_accident'
@@ -15,10 +15,10 @@ def nuclear_scenarios_module(y, state, verbose):
                     state['catastrophe'].append('nukes_accident')
     
     first_year_of_war = state['war'] and (state['war_start_year'] == y)
-    if not state['terminate'] and state['war'] and sq.event_occurs(p_nuclear_exchange_given_war(first_year_of_war)):
+    if not state['terminate'] and state['war'] and sq.event(p_nuclear_exchange_given_war(first_year_of_war)):
         state['nuclear_weapon_used'] = True
-        if sq.event_occurs(p_catastrophe_from_nuclear_exchange(state['war'])):
-            if sq.event_occurs(p_xrisk_from_nuclear_catastrophe):
+        if sq.event(p_catastrophe_from_nuclear_exchange(state['war'])):
+            if sq.event(p_xrisk_from_nuclear_catastrophe):
                 if verbose:
                     print('{}: ...XRISK from nukes (war) :('.format(y))
                 state['category'] = 'xrisk_nukes_war'

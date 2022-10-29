@@ -1,6 +1,6 @@
 def supervolcano_scenarios_module(y, state, verbose):
-    if sq.event_occurs(p_supervolcano_catastrophe):
-        if sq.event_occurs(p_supervolcano_extinction_given_catastrophe):
+    if sq.event(p_supervolcano_catastrophe):
+        if sq.event(p_supervolcano_extinction_given_catastrophe):
             if verbose:
                 print('{}: ...XRISK from supervolcano'.format(y))
             state['category'] = 'xrisk_supervolcano'
