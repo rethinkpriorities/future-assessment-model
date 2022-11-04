@@ -14,6 +14,7 @@ def bio_scenarios_module(y, state, verbose):
                 state['catastrophe'].append('natural_pathogen')
 
     if not state['terminate'] and sq.event(p_accidental_bio(state['war'])):
+        state['lab_leak'] = True
         engineered = sq.event(ratio_engineered_vs_natural_lab_leak)
         if engineered:
             state['engineered_pathogen'] = True
@@ -36,6 +37,7 @@ def bio_scenarios_module(y, state, verbose):
     
     if not state['terminate'] and state['war'] and sq.event(p_biowar_given_war):
         state['engineered_pathogen'] = True
+        state['state_bioweapon'] = True
         if sq.event(p_engineered_bio_is_catastrophe):
             if sq.event(p_xrisk_from_engineered_bio_given_catastrophe(y - CURRENT_YEAR)):
                 if verbose:
@@ -49,6 +51,7 @@ def bio_scenarios_module(y, state, verbose):
                 state['catastrophe'].append('engineered_pathogen')
     
     if not state['terminate'] and sq.event(p_nonstate_bio):
+        state['nonstate_bioweapon'] = True
         engineered = sq.event(ratio_engineered_vs_natural_lab_leak)
         if engineered:
             state['engineered_pathogen'] = True
