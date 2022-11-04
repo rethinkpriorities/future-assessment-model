@@ -22,7 +22,8 @@ def define_event(verbosity=0):
              'nano': False, 'wars': [], 'war': False, 'war_start_year': None,
              'war_end_year': None, 'russia_nuke_first': False, 'china_nuke_first': False,
              'war_belligerents': None, 'peace_until': None, 'engineered_pathogen': False,
-             'natural_pathogen': False, 'averted_misalignment': False,
+             'natural_pathogen': False, 'lab_leak': False, 'state_bioweapon': False,
+             'nonstate_bioweapon': False, 'averted_misalignment': False,
              'nuclear_weapon_used': False, 'catastrophe': [], 'recent_catastrophe_year': None,
              'terminate': False, 'final_year': None, 'double_catastrophe_xrisk': None}
     allowed_state_keys = list(state.keys())
