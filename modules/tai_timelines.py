@@ -286,27 +286,78 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                    willingness_spend_horizon_=willingness_spend_horizon_,
                                    print_diagnostic=verbose)
 
-    # print('## FULL MODEL ##')
-    # tai_years = bayes.bayesnet(define_event,
-    #                            verbose=True,
-    #                            raw=True,
-    #                            cores=cores,
-    #                            load_cache_file=load_cache_file,
-    #                            dump_cache_file=dump_cache_file,
-    #                            reload_cache=reload_cache,
-    #                            n=runs)
+    print('## RUN TIMELINES MODEL ##')
+    tai_years = bayes.bayesnet(define_event,
+                               verbose=True,
+                               raw=True,
+                               cores=cores,
+                               load_cache_file=load_cache_file,
+                               dump_cache_file=dump_cache_file,
+                               reload_cache=reload_cache,
+                               n=runs)
 
-    # out = sq.get_percentiles(tai_years, percentiles=[5, 10, 15, 35, 50, 60, 80])
-    # pprint([str(o[0]) + '%: ' + (str(int(o[1])) if o[1] < MAX_YEAR else '>' + str(MAX_YEAR)) for o in out.items()])
-    # print('-')
-    # print('-')
+    print('-')
+    
+    print('## DISTRIBUTION OF TAI ARRIVAL DATE ##')
+    pctiles = sq.get_percentiles(tai_years, percentiles=[5, 10, 15, 20, 25, 35, 50, 60, 75, 80, 90, 95])
+    pprint([str(o[0]) + '%: ' + (str(int(o[1])) if o[1] < MAX_YEAR else '>' + str(MAX_YEAR)) for o in pctiles.items()])
+    print('-')
+    print('-')
 
-    # pprint([str(o[0]) + '%: ' + (str(int(o[1]) - CURRENT_YEAR) if o[1] < MAX_YEAR else '>' + str(MAX_YEAR - CURRENT_YEAR)) + ' years from now' for o in out.items()])
-    # print('-')
-    # print('-')
+    print('## DISTRIBUTION OF RELATIVE TAI ARRIVAL DATE ##')
+    pprint([str(o[0]) + '%: ' + (str(int(o[1]) - CURRENT_YEAR) if o[1] < MAX_YEAR else '>' + str(MAX_YEAR - CURRENT_YEAR)) + ' years from now' for o in pctiles.items()])
+    print('-')
+    print('-')
 
 
-    """
+    print('## TAI ARRIVAL DATE BY BIN ##')
+
+    def bin_tai_yrs(low=None, hi=None):
+        low = CURRENT_YEAR if low is None else low
+        if hi is None:
+            r = np.mean([y >= low for y in tai_years])
+        else:
+            r = np.mean([(y >= low) and (y <= hi) for y in tai_years])
+        return round(r * 100, 1)
+
+
+    print('This year: {}%'.format(bin_tai_yrs(hi=CURRENT_YEAR)))
+    print('2024-2027: {}%'.format(bin_tai_yrs(2024, 2026)))
+    print('2028-2029: {}%'.format(bin_tai_yrs(2027, 2029)))
+    print('2030-2034: {}%'.format(bin_tai_yrs(2030, 2034)))
+    print('2035-2039: {}%'.format(bin_tai_yrs(2035, 2039)))
+    print('2040-2049: {}%'.format(bin_tai_yrs(2040, 2049)))
+    print('2050-2059: {}%'.format(bin_tai_yrs(2050, 2059)))
+    print('2060-2069: {}%'.format(bin_tai_yrs(2060, 2069)))
+    print('2070-2079: {}%'.format(bin_tai_yrs(2070, 2079)))
+    print('2080-2089: {}%'.format(bin_tai_yrs(2080, 2089)))
+    print('2090-2099: {}%'.format(bin_tai_yrs(2090, 2099)))
+    print('2100-2109: {}%'.format(bin_tai_yrs(2100, 2109)))
+    print('2110-2119: {}%'.format(bin_tai_yrs(2110, 2119)))
+    print('>2020: {}%'.format(bin_tai_yrs(low=2020)))
+    print('-')
+
+    print('## TAI ARRIVAL DATE BY YEAR - COMPARE TO BENCHMARK ##')
+    print('By EOY 2024: {}%'.format(bin_tai_yrs(hi=2024)))
+    print('By EOY 2025: {}%'.format(bin_tai_yrs(hi=2025)))
+    print('By EOY 2027: {}% (within 5 yrs)'.format(bin_tai_yrs(hi=2027)))
+    print('By EOY 2030: {}% (Ajeya 2022: 15%)'.format(bin_tai_yrs(hi=2030)))
+    print('By EOY 2032: {}% (within 10yrs)'.format(bin_tai_yrs(hi=2032)))
+    print('By EOY 2036: {}% (Holden benchmark - 10%-50%, Holden: 10%; Ajeya 2022: 35%)'.format(bin_tai_yrs(hi=2036)))
+    print('By EOY 2040: {}% (Ajeya 2022: 50%)'.format(bin_tai_yrs(hi=2040)))
+    print('By EOY 2042: {}% (FTX: 20%, 10%-45%)'.format(bin_tai_yrs(hi=2042)))
+    print('By EOY 2047: {}% (within 25yrs)'.format(bin_tai_yrs(hi=2047)))
+    print('By EOY 2050: {}% (Ajeya 2020: 50%, Ajeya 2022: 60%)'.format(bin_tai_yrs(hi=2050)))
+    print('By EOY 2060: {}% (Holden benchmark - 25%-75%, Holden: 50%)'.format(bin_tai_yrs(hi=2060)))
+    print('By EOY 2070: {}% (Carlsmith: 50%)'.format(bin_tai_yrs(hi=2070)))
+    print('By EOY 2072: {}% (within 50yrs)'.format(bin_tai_yrs(hi=2072)))
+    print('By EOY 2078: {}% (within my expected lifetime)'.format(bin_tai_yrs(hi=2078)))
+    print('By EOY 2099: {}% (FTX: 60%, >30%)'.format(bin_tai_yrs(hi=2099)))
+    print('By EOY 2100: {}% (Holden benchmark - 33%-90%, Holden: 66%)'.format(bin_tai_yrs(hi=2100)))
+    print('By EOY 2122: {}% (within 100yrs)'.format(bin_tai_yrs(hi=2122)))
+    print('-')
+    print('-')
+
     tai_years_ = np.array([MAX_YEAR + 1 if t > MAX_YEAR else t for t in tai_years])
     count, bins_count = np.histogram(tai_years_, bins=(MAX_YEAR - CURRENT_YEAR))
     bins = np.round(np.array([b for b in bins_count[1:] if b <= MAX_YEAR]))
@@ -317,33 +368,12 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     plt.legend()
     plt.show()
 
-
-    d_ = dict(zip(years, cdf[:len(bins)]))
-
-    def bin_tai_yrs(low=None, hi=None):
-        low = CURRENT_YEAR if low is None else low
-        out = 1 - d_[low] if hi is None else d_[hi] - d_[low]
-        return round(out * 100, 1)
-
-    print('<2024: {}%'.format(bin_tai_yrs(hi=2024)))
-    print('2025-2029: {}%'.format(bin_tai_yrs(2025, 2029)))
-    print('2030-2039: {}%'.format(bin_tai_yrs(2030, 2039)))
-    print('2040-2049: {}%'.format(bin_tai_yrs(2040, 2049)))
-    print('2050-2059: {}%'.format(bin_tai_yrs(2050, 2059)))
-    print('2060-2069: {}%'.format(bin_tai_yrs(2060, 2069)))
-    print('2070-2079: {}%'.format(bin_tai_yrs(2070, 2079)))
-    print('2080-2089: {}%'.format(bin_tai_yrs(2080, 2089)))
-    print('2090-2099: {}%'.format(bin_tai_yrs(2090, 2099)))
-    print('2100-2109: {}%'.format(bin_tai_yrs(2100, 2109)))
-    print('2110-2119: {}%'.format(bin_tai_yrs(2110, 2119)))
-    print('>2120: {}%'.format(bin_tai_yrs(low=2120)))
-
-
     pdf_smoothed = savitzky_golay(pdf[:len(bins)], 51, 3)
     plt.plot(bins, pdf_smoothed, label='PDF (smoothed)')
     plt.legend()
     plt.show()
-    """
+    print('-')
+    print('-')
 
     initial_flops_s = variables['tai_flop_size']
     initial_flops_p = print_graph(initial_flops_s, 'TAI FLOP SIZE')
