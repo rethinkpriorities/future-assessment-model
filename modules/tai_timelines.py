@@ -102,11 +102,11 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, nonscaling_delay_, algo_do
                                                                                np.round(flops_halving_rate_, 1),
                                                                                np.round(math.log10(max_flops_per_dollar_), 1),
                                                                                numerize(max_flops_per_dollar_)))
-        print(('We are willing to pay {} log 2022$USD (~{}) and this increases by {}x per year to a max of {}% of GDP. ' +
+        print(('We are willing to pay {} log 2022$USD (~{}) and this doubles every {} years to a max of {}% of GDP. ' +
                'GDP grows at a rate of {}x per year.').format(np.round(math.log10(initial_pay_), 1),
                                                               numerize(initial_pay_),
                                                               np.round(spend_doubling_time_, 1),
-                                                              np.round(max_gdp_frac_, 4),
+                                                              np.round(max_gdp_frac_, 6),
                                                               np.round(gdp_growth_, 3)))
         if willingness_ramp_ < 1:
             print('In this simulation, if we are {}% of the way to paying for TAI, we will ramp to paying for TAI.'.format(np.round(willingness_ramp_ * 100)))
@@ -334,7 +334,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     print('2090-2099: {}%'.format(bin_tai_yrs(2090, 2099)))
     print('2100-2109: {}%'.format(bin_tai_yrs(2100, 2109)))
     print('2110-2119: {}%'.format(bin_tai_yrs(2110, 2119)))
-    print('>2020: {}%'.format(bin_tai_yrs(low=2020)))
+    print('>2120: {}%'.format(bin_tai_yrs(low=2120)))
     print('-')
 
     print('## TAI ARRIVAL DATE BY YEAR - COMPARE TO BENCHMARK ##')
@@ -414,6 +414,10 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
 
     max_gdp_frac_s = sq.sample(variables['max_gdp_frac'], n=1000)
     max_gdp_frac_p = print_graph(max_gdp_frac_s, label='MAX GDP FRAC', digits=5)
+
+    if variables.get('nonscaling_delay', 0) != 0:
+        nonscaling_delay_s = sq.sample(variables['nonscaling_delay'], n=1000)
+        nonscaling_delay_p = print_graph(nonscaling_delay_s, label='NONSCALING DELAY', digits=0)
 
     willingness_ramp = variables.get('willingness_ramp', 0)
     if willingness_ramp != 0:
@@ -502,7 +506,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     print('-')
     print('-')
     print('## FLOP Needed to Make TAI (Given Algorithmic Progress) ##')
-    flops_50 = np.array([flops_needed(initial_flops=10 ** initial_flops_per_dollar_p[50],
+    flops_50 = np.array([flops_needed(initial_flops=10 ** initial_flops_p[50],
                                       doubling_rate=algo_halving_fn(algo_doubling_rate_min_p[50],
                                                                     algo_doubling_rate_max_p[50],
                                                                     initial_flops_p[50]),
@@ -510,7 +514,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                                                                           max_reduction_p[50],
                                                                                           initial_flops_p[50]),
                                       year=(y - CURRENT_YEAR)) for y in years])
-    flops_10 = np.array([flops_needed(initial_flops=10 ** initial_flops_per_dollar_p[10],
+    flops_10 = np.array([flops_needed(initial_flops=10 ** initial_flops_p[10],
                                       doubling_rate=algo_halving_fn(algo_doubling_rate_min_p[10],
                                                                     algo_doubling_rate_max_p[10],
                                                                     initial_flops_p[10]),
@@ -518,7 +522,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                                                                           max_reduction_p[10],
                                                                                           initial_flops_p[10]),
                                       year=(y - CURRENT_YEAR)) for y in years])
-    flops_90 = np.array([flops_needed(initial_flops=10 ** initial_flops_per_dollar_p[90],
+    flops_90 = np.array([flops_needed(initial_flops=10 ** initial_flops_p[90],
                                       doubling_rate=algo_halving_fn(algo_doubling_rate_min_p[90],
                                                                     algo_doubling_rate_max_p[90],
                                                                     initial_flops_p[90]),
@@ -606,6 +610,22 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                                                    round(algo_halving_fn(algo_doubling_rate_min_p[50],
                                                                                          algo_doubling_rate_max_p[50],
                                                                                          t), 2)))
+
+    if variables.get('initial_chance_of_nonscaling_issue', 0) != 0:
+        print('-')
+        print('-')
+        print('## Chance of nonscaling delay ##')
+        p_delay_ = np.array([p_nonscaling_delay(variables['initial_chance_of_nonscaling_issue'],
+                                                variables['final_chance_of_nonscaling_issue'],
+                                                y,
+                                                variables['nonscaling_issue_bottom_year']) for y in years])
+        plt.plot(years, p_delay_, color='black')
+        plt.ylabel('chance of a non-scaling delay')
+        plt.show()
+
+        for y in years[:10] + years[10::10]:
+            outstr = 'Year: {} - chance of a nonscaling delay if TAI compute needs are otherwise met in this year: {}%'
+            print(outstr.format(y, int(round(p_delay_[y - CURRENT_YEAR] * 100))))
 
     print('-')
     print('-')
