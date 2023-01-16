@@ -229,79 +229,7 @@ def print_graph(samples, label, reverse=False, digits=1):
     return pctiles
 
 
-def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
-                        dump_cache_file=None, reload_cache=False):
-
-    def define_event(verbose=False):
-        tai_flop_size_ = variables['tai_flop_size']
-        if isinstance(tai_flop_size_, sq.BaseDistribution):
-            tai_flop_size_ = sq.sample(tai_flop_size_)
-        else:
-            tai_flop_size_ = sq.sample(sq.discrete(variables['tai_flop_size']))
-
-        if tai_flop_size_ > 300:
-            tai_flop_size_ = int(tai_flop_size_) # Handle overflow errors
-        
-        algo_doubling_rate_ = algo_halving_fn(sq.sample(variables['algo_doubling_rate_min']),
-                                              sq.sample(variables['algo_doubling_rate_max']),
-                                              tai_flop_size_)
-        
-        possible_algo_reduction_ = possible_algo_reduction_fn(sq.sample(variables['min_reduction']),
-                                                              sq.sample(variables['max_reduction']),
-                                                              tai_flop_size_)
-        
-        initial_flop_per_dollar_ = 10 ** sq.sample(variables['initial_flop_per_dollar'])
-        flop_halving_rate_ = sq.sample(variables['flop_halving_rate'])
-        max_flop_per_dollar_ = 10 ** sq.sample(variables['max_flop_per_dollar'])
-        initial_pay_ = 10 ** sq.sample(variables['initial_pay'])
-        gdp_growth_ = sq.sample(variables['gdp_growth'])
-        max_gdp_frac_ = sq.sample(variables['max_gdp_frac'])
-        
-        willingness_ramp_happens = sq.event_occurs(variables.get('p_willingness_ramp', 0))
-        if willingness_ramp_happens:
-            willingness_ramp_ = sq.sample(variables.get('willingness_ramp', 1))
-        else:
-            willingness_ramp_ = 1
-        
-        initial_gdp_ = variables['initial_gdp']
-        spend_doubling_time_ = sq.sample(variables['spend_doubling_time'])
-        nonscaling_delay_ = sq.sample(variables.get('nonscaling_delay', 0))
-        initial_chance_of_nonscaling_issue_ = variables.get('initial_chance_of_nonscaling_issue', 0)
-        final_chance_of_nonscaling_issue_ = variables.get('final_chance_of_nonscaling_issue', 0)
-        nonscaling_issue_bottom_year_ = variables.get('nonscaling_issue_bottom_year', 0)
-        willingness_spend_horizon_ = int(sq.sample(variables.get('willingness_spend_horizon', 1)))
-        
-        return run_tai_model_round(initial_gdp_=initial_gdp_,
-                                   tai_flop_size_=tai_flop_size_,
-                                   nonscaling_delay_=nonscaling_delay_,
-                                   algo_doubling_rate_=algo_doubling_rate_,
-                                   possible_algo_reduction_=possible_algo_reduction_,
-                                   initial_flop_per_dollar_=initial_flop_per_dollar_,
-                                   flop_halving_rate_=flop_halving_rate_,
-                                   max_flop_per_dollar_=max_flop_per_dollar_,
-                                   initial_pay_=initial_pay_,
-                                   gdp_growth_=gdp_growth_,
-                                   max_gdp_frac_=max_gdp_frac_,
-                                   willingness_ramp_=willingness_ramp_,
-                                   spend_doubling_time_=spend_doubling_time_,
-                                   initial_chance_of_nonscaling_issue_=initial_chance_of_nonscaling_issue_,
-                                   final_chance_of_nonscaling_issue_=final_chance_of_nonscaling_issue_,
-                                   nonscaling_issue_bottom_year_=nonscaling_issue_bottom_year_,
-                                   willingness_spend_horizon_=willingness_spend_horizon_,
-                                   print_diagnostic=verbose)
-
-    print('## RUN TIMELINES MODEL ##')
-    tai_years = bayes.bayesnet(define_event,
-                               verbose=True,
-                               raw=True,
-                               cores=cores,
-                               load_cache_file=load_cache_file,
-                               dump_cache_file=dump_cache_file,
-                               reload_cache=reload_cache,
-                               n=runs)
-
-    print('-')
-    
+def print_tai_arrival_stats(tai_years):
     print('## DISTRIBUTION OF TAI ARRIVAL DATE ##')
     pctiles = sq.get_percentiles(tai_years, percentiles=[5, 10, 15, 20, 25, 35, 50, 60, 75, 80, 90, 95])
     pprint([str(o[0]) + '%: ' + (str(int(o[1])) if o[1] < MAX_YEAR else '>' + str(MAX_YEAR)) for o in pctiles.items()])
@@ -376,6 +304,81 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     plt.plot(bins, pdf_smoothed, label='PDF (smoothed)')
     plt.legend()
     plt.show()
+
+
+def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
+                        dump_cache_file=None, reload_cache=False):
+
+    def define_event(verbose=False):
+        tai_flop_size_ = variables['tai_flop_size']
+        if isinstance(tai_flop_size_, sq.BaseDistribution):
+            tai_flop_size_ = sq.sample(tai_flop_size_)
+        else:
+            tai_flop_size_ = sq.sample(sq.discrete(variables['tai_flop_size']))
+
+        if tai_flop_size_ > 300:
+            tai_flop_size_ = int(tai_flop_size_) # Handle overflow errors
+        
+        algo_doubling_rate_ = algo_halving_fn(sq.sample(variables['algo_doubling_rate_min']),
+                                              sq.sample(variables['algo_doubling_rate_max']),
+                                              tai_flop_size_)
+        
+        possible_algo_reduction_ = possible_algo_reduction_fn(sq.sample(variables['min_reduction']),
+                                                              sq.sample(variables['max_reduction']),
+                                                              tai_flop_size_)
+        
+        initial_flop_per_dollar_ = 10 ** sq.sample(variables['initial_flop_per_dollar'])
+        flop_halving_rate_ = sq.sample(variables['flop_halving_rate'])
+        max_flop_per_dollar_ = 10 ** sq.sample(variables['max_flop_per_dollar'])
+        initial_pay_ = 10 ** sq.sample(variables['initial_pay'])
+        gdp_growth_ = sq.sample(variables['gdp_growth'])
+        max_gdp_frac_ = sq.sample(variables['max_gdp_frac'])
+        
+        willingness_ramp_happens = sq.event_occurs(variables.get('p_willingness_ramp', 0))
+        if willingness_ramp_happens:
+            willingness_ramp_ = sq.sample(variables.get('willingness_ramp', 1))
+        else:
+            willingness_ramp_ = 1
+        
+        initial_gdp_ = variables['initial_gdp']
+        spend_doubling_time_ = sq.sample(variables['spend_doubling_time'])
+        nonscaling_delay_ = sq.sample(variables.get('nonscaling_delay', 0))
+        initial_chance_of_nonscaling_issue_ = variables.get('initial_chance_of_nonscaling_issue', 0)
+        final_chance_of_nonscaling_issue_ = variables.get('final_chance_of_nonscaling_issue', 0)
+        nonscaling_issue_bottom_year_ = variables.get('nonscaling_issue_bottom_year', 0)
+        willingness_spend_horizon_ = int(sq.sample(variables.get('willingness_spend_horizon', 1)))
+        
+        return run_tai_model_round(initial_gdp_=initial_gdp_,
+                                   tai_flop_size_=tai_flop_size_,
+                                   nonscaling_delay_=nonscaling_delay_,
+                                   algo_doubling_rate_=algo_doubling_rate_,
+                                   possible_algo_reduction_=possible_algo_reduction_,
+                                   initial_flop_per_dollar_=initial_flop_per_dollar_,
+                                   flop_halving_rate_=flop_halving_rate_,
+                                   max_flop_per_dollar_=max_flop_per_dollar_,
+                                   initial_pay_=initial_pay_,
+                                   gdp_growth_=gdp_growth_,
+                                   max_gdp_frac_=max_gdp_frac_,
+                                   willingness_ramp_=willingness_ramp_,
+                                   spend_doubling_time_=spend_doubling_time_,
+                                   initial_chance_of_nonscaling_issue_=initial_chance_of_nonscaling_issue_,
+                                   final_chance_of_nonscaling_issue_=final_chance_of_nonscaling_issue_,
+                                   nonscaling_issue_bottom_year_=nonscaling_issue_bottom_year_,
+                                   willingness_spend_horizon_=willingness_spend_horizon_,
+                                   print_diagnostic=verbose)
+
+    print('## RUN TIMELINES MODEL ##')
+    tai_years = bayes.bayesnet(define_event,
+                               verbose=True,
+                               raw=True,
+                               cores=cores,
+                               load_cache_file=load_cache_file,
+                               dump_cache_file=dump_cache_file,
+                               reload_cache=reload_cache,
+                               n=runs)
+
+    print('-')
+    print_tai_arrival_stats(tai_years)
     print('-')
     print('-')
 
@@ -426,6 +429,24 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     if variables.get('nonscaling_delay', 0) != 0:
         nonscaling_delay_s = sq.sample(variables['nonscaling_delay'], n=1000)
         nonscaling_delay_p = print_graph(nonscaling_delay_s, label='NONSCALING DELAY', digits=0)
+
+    if variables.get('initial_chance_of_nonscaling_issue', 0) != 0:
+        initial_chance_of_nonscaling_issue_s = sq.sample(variables['initial_chance_of_nonscaling_issue'], n=1000)
+        initial_chance_of_nonscaling_issue_p = print_graph(initial_chance_of_nonscaling_issue_s,
+                                                           label='INITIAL CHANCE OF NONSCALING ISSUE',
+                                                           digits=0)
+
+    if variables.get('initial_chance_of_nonscaling_issue', 0) != 0:
+        final_chance_of_nonscaling_issue_s = sq.sample(variables['final_chance_of_nonscaling_issue'], n=1000)
+        final_chance_of_nonscaling_issue_p = print_graph(final_chance_of_nonscaling_issue_s,
+                                                         label='FINAL CHANCE OF NONSCALING ISSUE',
+                                                         digits=0)
+
+    if variables.get('nonscaling_issue_bottom_year', 0) != 0:
+        nonscaling_issue_bottom_year_s = sq.sample(variables['nonscaling_issue_bottom_year'], n=1000)
+        nonscaling_issue_bottom_year_p = print_graph(nonscaling_issue_bottom_year_s,
+                                                     label='NONSCALING BOTTOM YEAR',
+                                                     digits=0)
 
     willingness_ramp = variables.get('willingness_ramp', 0)
     if willingness_ramp != 0:
