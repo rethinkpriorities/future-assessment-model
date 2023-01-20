@@ -1,4 +1,4 @@
-def check_for_double_dip_catastrophe(y, state, catastrophe_this_year, verbose):
+def check_for_double_dip_catastrophe(y, state, catastrophe_this_year, n_catastrophes, verbose):
     if not state['terminate'] and catastrophe_this_year:
         if state['recent_catastrophe_year'] is None:
             state['recent_catastrophe_year'] = y

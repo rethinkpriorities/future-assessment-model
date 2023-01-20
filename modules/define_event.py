@@ -1,3 +1,4 @@
+import random
 import time
 
 
@@ -32,32 +33,27 @@ def define_event(verbosity=0):
     
     for y in years:
         n_catastrophes = len(state['catastrophe'])
+
+        # Run modules in a random order
+        modules = [tai_scenarios_module,
+                   great_power_war_scenarios_module,
+                   bio_scenarios_module,
+                   nuclear_scenarios_module,
+                   nano_scenarios_module,
+                   supervolcano_scenarios_module,
+                   unknown_unknown_scenarios_module]
+        random.shuffle(modules)
+        for module in modules:
+            if not state['terminate']:
+                state = module(y, state, verbosity > 0)
         
-        # Run modules
-        # TODO: Run in random order?
-        if not state['terminate'] and state['tai']:
-            state = tai_scenarios_module(y, state, verbosity > 0)
-        
-        if not state['terminate']:
-            state = great_power_war_scenarios_module(y, state, verbosity > 0)
-
-        if not state['terminate']:
-            state = bio_scenarios_module(y, state, verbosity > 0)
-
-        if not state['terminate']:
-            state = nuclear_scenarios_module(y, state, verbosity > 0)
-
-        if not state['terminate']:
-            state = nano_scenarios_module(y, state, verbosity > 0)
-
-        if not state['terminate']:
-            state = supervolcano_scenarios_module(y, state, verbosity > 0)
-
-        if not state['terminate']:
-            state = unknown_unknown_scenarios_module(y, state, verbosity > 0)
-        
+        # Check for double dip catastrophe
         catastrophe_this_year = len(state['catastrophe']) > n_catastrophes
-        state = check_for_double_dip_catastrophe(y, state, catastrophe_this_year, verbosity > 0)
+        state = check_for_double_dip_catastrophe(y,
+                                                 state,
+                                                 catastrophe_this_year,
+                                                 n_catastrophes,
+                                                 verbosity > 0)
 
         # Check if TAI is created this year
         if not state['terminate'] and not state['tai'] and y >= tai_year:
@@ -66,7 +62,7 @@ def define_event(verbosity=0):
             state['tai'] = True
             state['tai_year'] = y
 
-        # Check validity of state
+        # Enforce validity of state
         for k in list(state.keys()):
             if k not in allowed_state_keys:
                 raise ValueError('key {} found and not provisioned'.format(k))

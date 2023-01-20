@@ -1,6 +1,6 @@
 # TODO: Refactor
 def tai_scenarios_module(y, state, verbose):
-    if state['tai_type'] != 'abandoned' and state['tai_type'] != 'tool':
+    if state['tai'] and state['tai_type'] != 'abandoned' and state['tai_type'] != 'tool':
         # TODO: Slow vs. fast takeoff
         # TODO: May not deploy TAI as soon as it is deployable
         if (sq.event(p_make_agent_tai) or state['tai_type'] == 'agent') and state['tai_type'] != 'tool':
