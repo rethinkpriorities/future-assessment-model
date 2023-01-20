@@ -57,7 +57,7 @@ def define_event(verbosity=0):
                                                  verbosity > 0)
 
         # Modify TAI arrival date for wars and catastrophes
-        if not state['terminate'] and not state['tai']
+        if not state['terminate'] and not state['tai']:
             if catastrophe_this_year:
                 delay = int(np.ceil(sq.sample(if_catastrophe_delay_tai_arrival_by_years)))
                 tai_year += delay
