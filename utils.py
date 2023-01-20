@@ -46,7 +46,7 @@ def format_gb(gb):
 
 
 def generalized_logistic_curve(x, slope, shift, push, maximum, minimum):
-     return minimum + ((maximum - minimum) / ((1 + shift * math.exp(-slope * x)) ** (1/push)))
+     return minimum + ((maximum - minimum) / ((1 + shift * math.exp(-slope * x)) ** (1 / push)))
 
 
 def plot_tai(plt, years, cost_of_tai_collector, willingness_collector):
