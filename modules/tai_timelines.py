@@ -74,7 +74,7 @@ def possible_algo_reduction_fn(min_reduction, max_reduction, tai_flop_size):
     return min(max(min_reduction + round((tai_flop_size - 32) / 4), min_reduction), max_reduction)
 
 
-def derive_nonscaling_delay_curve(minimum, maximum, bottom_year):
+def derive_nonscaling_delay_curve(minimum, maximum, bottom_year, verbose=True):
     def shape_curve(slope, shift, push):
         years = list(range(CURRENT_YEAR, bottom_year))
         year_cuts = [years[0], years[int(round(len(years) / 2))], years[-1]]
@@ -92,12 +92,13 @@ def derive_nonscaling_delay_curve(minimum, maximum, bottom_year):
     pbounds = {'slope': (0.01, 10),
                'shift': (0.01, 10),
                'push': (0.01, 10)}
-    optimizer = BayesianOptimization(f=shape_curve, pbounds=pbounds, random_state=1)
+    optimizer = BayesianOptimization(f=shape_curve, pbounds=pbounds, verbose=verbose, allow_duplicate_points=True)
     optimizer.maximize(init_points=40, n_iter=80)
     params = optimizer.max['params']
-    print('Curve params found')
-    pprint(params)
-    print('-')
+    if verbose:
+        print('Curve params found')
+        pprint(params)
+        print('-')
 
     def p_nonscaling_delay(year):
         if year == CURRENT_YEAR:
