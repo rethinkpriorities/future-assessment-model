@@ -55,6 +55,23 @@ def define_event(verbosity=0):
                                                  n_catastrophes,
                                                  verbosity > 0)
 
+        # Modify TAI arrival date for wars and catastrophes
+        if catastrophe_this_year:
+            delay = int(np.ceil(sq.sample(if_catastrophe_delay_tai_arrival_by_years)))
+            tai_year += delay
+            if verbosity > 0:
+                print('...catastrophe delays TAI by {} years'.format(delay))
+        if (state['war'] and
+            state['war_start_year'] == y and
+            state['war_belligerents'] == 'US/China'):
+            delay = int(np.ceil(sq.sample(if_us_china_war_delay_tai_arrival_by_years)))
+            tai_year += delay
+            if verbosity > 0:
+                print('...US-China war delays TAI by {} years'.format(delay))
+        # TODO: No TAI delay if TAI has already arrived
+        # TODO: US-China war only delays once
+        # TODO: War -> TAI spending increase
+
         # Check if TAI is created this year
         if not state['terminate'] and not state['tai'] and y >= tai_year:
             if verbosity > 0:
