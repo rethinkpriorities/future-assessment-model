@@ -128,15 +128,15 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
     
     if print_diagnostic:
         print('It takes {} log FLOP (~{}) for transformative capabilities.'.format(np.round(tai_flop_size_, 1),
-                                                                                    numerize(10 ** tai_flop_size_)))
+                                                                                   numerize(10 ** tai_flop_size_)))
         print('Every {} years algorithms get 2x better, with {} log reductions possible.'.format(np.round(algo_doubling_rate_, 1),
                                                                                                  np.round(possible_algo_reduction_, 1)))
         print(('FLOP start at a cost of {} log FLOP (~{}) per 2022$USD. Every {} years they get ' +
                '2x cheaper, to a maximum of {} log FLOP (~{}) per 2022$USD.').format(np.round(math.log10(initial_flop_per_dollar_), 1),
-                                                                               numerize(initial_flop_per_dollar_),
-                                                                               np.round(flop_halving_rate_, 1),
-                                                                               np.round(math.log10(max_flop_per_dollar_), 1),
-                                                                               numerize(max_flop_per_dollar_)))
+                                                                                     numerize(initial_flop_per_dollar_),
+                                                                                     np.round(flop_halving_rate_, 1),
+                                                                                     np.round(math.log10(max_flop_per_dollar_), 1),
+                                                                                     numerize(max_flop_per_dollar_)))
         print(('We are willing to pay {} log 2022$USD (~{}) and this doubles every {} years to a max of {}% of GDP. ' +
                'GDP grows at a rate of {}x per year.').format(np.round(math.log10(initial_pay_), 1),
                                                               numerize(initial_pay_),
@@ -158,14 +158,14 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
     for y in years:
         if not tai_created:
             flop_needed_ = flop_needed(initial_flop=10 ** tai_flop_size_,
-                                         doubling_rate=algo_doubling_rate_,
-                                         possible_reduction=10 ** possible_algo_reduction_,
-                                         year=(y - CURRENT_YEAR))
+                                       doubling_rate=algo_doubling_rate_,
+                                       possible_reduction=10 ** possible_algo_reduction_,
+                                       year=(y - CURRENT_YEAR))
             
             flop_per_dollar_ = flop_per_dollar(initial_flop_per_dollar=initial_flop_per_dollar_,
-                                                 max_flop_per_dollar=max_flop_per_dollar_,
-                                                 halving_rate=flop_halving_rate_,
-                                                 year=(y - CURRENT_YEAR))
+                                               max_flop_per_dollar=max_flop_per_dollar_,
+                                               halving_rate=flop_halving_rate_,
+                                               year=(y - CURRENT_YEAR))
             
             if flop_per_dollar_ > 10 ** 200 or flop_needed_ > 10 ** 200:
                 flop_needed_ = int(flop_needed_)
@@ -445,12 +445,12 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
 
     initial_flop_per_dollar_s = sq.sample(variables['initial_flop_per_dollar'], n=1000)
     initial_flop_per_dollar_p = print_graph(initial_flop_per_dollar_s,
-                                             label='INITIAL FLOP PER DOLLAR')
+                                            label='INITIAL FLOP PER DOLLAR')
 
     flop_halving_rate_s = sq.sample(variables['flop_halving_rate'], n=1000)
     flop_halving_rate_p = print_graph(flop_halving_rate_s,
-                                       label='FLOP HALVING RATE',
-                                       reverse=True)
+                                      label='FLOP HALVING RATE',
+                                      reverse=True)
 
     max_flop_per_dollar_s = sq.sample(variables['max_flop_per_dollar'], n=1000)
     max_flop_per_dollar_p = print_graph(max_flop_per_dollar_s, label='MAX FLOP PER DOLLAR')
@@ -574,29 +574,29 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     print('-')
     print('## FLOP Needed to Make TAI (Given Algorithmic Progress) ##')
     flops_50 = np.array([flop_needed(initial_flop=10 ** initial_flop_p[50],
-                                      doubling_rate=algo_halving_fn(algo_doubling_rate_min_p[50],
-                                                                    algo_doubling_rate_max_p[50],
-                                                                    initial_flop_p[50]),
-                                      possible_reduction=10 ** possible_algo_reduction_fn(min_reduction_p[50],
-                                                                                          max_reduction_p[50],
-                                                                                          initial_flop_p[50]),
-                                      year=(y - CURRENT_YEAR)) for y in years])
+                                     doubling_rate=algo_halving_fn(algo_doubling_rate_min_p[50],
+                                                                   algo_doubling_rate_max_p[50],
+                                                                   initial_flop_p[50]),
+                                     possible_reduction=10 ** possible_algo_reduction_fn(min_reduction_p[50],
+                                                                                         max_reduction_p[50],
+                                                                                         initial_flop_p[50]),
+                                     year=(y - CURRENT_YEAR)) for y in years])
     flops_10 = np.array([flop_needed(initial_flop=10 ** initial_flop_p[10],
-                                      doubling_rate=algo_halving_fn(algo_doubling_rate_min_p[10],
-                                                                    algo_doubling_rate_max_p[10],
-                                                                    initial_flop_p[10]),
-                                      possible_reduction=10 ** possible_algo_reduction_fn(min_reduction_p[10],
-                                                                                          max_reduction_p[10],
-                                                                                          initial_flop_p[10]),
-                                      year=(y - CURRENT_YEAR)) for y in years])
+                                     doubling_rate=algo_halving_fn(algo_doubling_rate_min_p[10],
+                                                                   algo_doubling_rate_max_p[10],
+                                                                   initial_flop_p[10]),
+                                     possible_reduction=10 ** possible_algo_reduction_fn(min_reduction_p[10],
+                                                                                         max_reduction_p[10],
+                                                                                         initial_flop_p[10]),
+                                     year=(y - CURRENT_YEAR)) for y in years])
     flops_90 = np.array([flop_needed(initial_flop=10 ** initial_flop_p[90],
-                                      doubling_rate=algo_halving_fn(algo_doubling_rate_min_p[90],
-                                                                    algo_doubling_rate_max_p[90],
-                                                                    initial_flop_p[90]),
-                                      possible_reduction=10 ** possible_algo_reduction_fn(min_reduction_p[90],
-                                                                                          max_reduction_p[90],
-                                                                                          initial_flop_p[90]),
-                                      year=(y - CURRENT_YEAR)) for y in years])
+                                     doubling_rate=algo_halving_fn(algo_doubling_rate_min_p[90],
+                                                                   algo_doubling_rate_max_p[90],
+                                                                   initial_flop_p[90]),
+                                     possible_reduction=10 ** possible_algo_reduction_fn(min_reduction_p[90],
+                                                                                         max_reduction_p[90],
+                                                                                         initial_flop_p[90]),
+                                     year=(y - CURRENT_YEAR)) for y in years])
 
     plt.plot(years, np.log10(flops_10), linestyle='dashed', color='black')
     plt.plot(years, np.log10(flops_90), linestyle='dashed', color='black')
@@ -618,17 +618,17 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     print('-')
     print('## FLOP per Dollar (Given Declining Costs) ##')
     flop_per_dollar_50 = np.array([flop_per_dollar(initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[50],
-                                                     max_flop_per_dollar=10 ** max_flop_per_dollar_p[50],
-                                                     halving_rate=flop_halving_rate_p[50],
-                                                     year=(y - CURRENT_YEAR)) for y in years])
+                                                   max_flop_per_dollar=10 ** max_flop_per_dollar_p[50],
+                                                   halving_rate=flop_halving_rate_p[50],
+                                                   year=(y - CURRENT_YEAR)) for y in years])
     flop_per_dollar_90 = np.array([flop_per_dollar(initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[90],
-                                                     max_flop_per_dollar=10 ** max_flop_per_dollar_p[90],
-                                                     halving_rate=flop_halving_rate_p[90],
-                                                     year=(y - CURRENT_YEAR)) for y in years])
+                                                   max_flop_per_dollar=10 ** max_flop_per_dollar_p[90],
+                                                   halving_rate=flop_halving_rate_p[90],
+                                                   year=(y - CURRENT_YEAR)) for y in years])
     flop_per_dollar_10 = np.array([flop_per_dollar(initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[10],
-                                                     max_flop_per_dollar=10 ** max_flop_per_dollar_p[10],
-                                                     halving_rate=flop_halving_rate_p[10],
-                                                     year=(y - CURRENT_YEAR)) for y in years])
+                                                   max_flop_per_dollar=10 ** max_flop_per_dollar_p[10],
+                                                   halving_rate=flop_halving_rate_p[10],
+                                                   year=(y - CURRENT_YEAR)) for y in years])
     plt.plot(years, np.log10(flop_per_dollar_10), linestyle='dashed', color='black')
     plt.plot(years, np.log10(flop_per_dollar_90), linestyle='dashed', color='black')
     plt.plot(years, np.log10(flop_per_dollar_50), color='black')
@@ -742,32 +742,32 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     print('-')
     print('## FLOP at Max Spend ##')
     flop_at_max_50 = np.array([flop_at_max(initial_gdp=variables['initial_gdp'],
-                                             gdp_growth=gdp_growth_p[50],
-                                             initial_pay=10 ** initial_pay_p[50],
-                                             spend_doubling_time=spend_doubling_time_p[50],
-                                             max_gdp_frac=max_gdp_frac_p[50],
-                                             initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[50],
-                                             max_flop_per_dollar=10 ** max_flop_per_dollar_p[50],
-                                             flop_halving_rate=flop_halving_rate_p[50],
-                                             year=(y - CURRENT_YEAR)) for y in years])
+                                           gdp_growth=gdp_growth_p[50],
+                                           initial_pay=10 ** initial_pay_p[50],
+                                           spend_doubling_time=spend_doubling_time_p[50],
+                                           max_gdp_frac=max_gdp_frac_p[50],
+                                           initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[50],
+                                           max_flop_per_dollar=10 ** max_flop_per_dollar_p[50],
+                                           flop_halving_rate=flop_halving_rate_p[50],
+                                           year=(y - CURRENT_YEAR)) for y in years])
     flop_at_max_10 = np.array([flop_at_max(initial_gdp=variables['initial_gdp'],
-                                             gdp_growth=gdp_growth_p[10],
-                                             initial_pay=10 ** initial_pay_p[10],
-                                             spend_doubling_time=spend_doubling_time_p[10],
-                                             max_gdp_frac=max_gdp_frac_p[10],
-                                             initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[10],
-                                             max_flop_per_dollar=10 ** max_flop_per_dollar_p[10],
-                                             flop_halving_rate=flop_halving_rate_p[10],
-                                             year=(y - CURRENT_YEAR)) for y in years])
+                                           gdp_growth=gdp_growth_p[10],
+                                           initial_pay=10 ** initial_pay_p[10],
+                                           spend_doubling_time=spend_doubling_time_p[10],
+                                           max_gdp_frac=max_gdp_frac_p[10],
+                                           initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[10],
+                                           max_flop_per_dollar=10 ** max_flop_per_dollar_p[10],
+                                           flop_halving_rate=flop_halving_rate_p[10],
+                                           year=(y - CURRENT_YEAR)) for y in years])
     flop_at_max_90 = np.array([flop_at_max(initial_gdp=variables['initial_gdp'],
-                                             gdp_growth=gdp_growth_p[90],
-                                             initial_pay=10 ** initial_pay_p[90],
-                                             spend_doubling_time=spend_doubling_time_p[90],
-                                             max_gdp_frac=max_gdp_frac_p[90],
-                                             initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[90],
-                                             max_flop_per_dollar=10 ** max_flop_per_dollar_p[90],
-                                             flop_halving_rate=flop_halving_rate_p[90],
-                                             year=(y - CURRENT_YEAR)) for y in years])
+                                           gdp_growth=gdp_growth_p[90],
+                                           initial_pay=10 ** initial_pay_p[90],
+                                           spend_doubling_time=spend_doubling_time_p[90],
+                                           max_gdp_frac=max_gdp_frac_p[90],
+                                           initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[90],
+                                           max_flop_per_dollar=10 ** max_flop_per_dollar_p[90],
+                                           flop_halving_rate=flop_halving_rate_p[90],
+                                           year=(y - CURRENT_YEAR)) for y in years])
 
     plt.plot(years, np.log10(flop_at_max_50), color='black')
     plt.plot(years, np.log10(flop_at_max_90), linestyle='dashed', color='black')
