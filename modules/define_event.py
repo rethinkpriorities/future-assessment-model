@@ -29,7 +29,7 @@ def define_event(verbosity=0):
              'terminate': False, 'final_year': None, 'double_catastrophe_xrisk': None}
     allowed_state_keys = list(state.keys())
     collectors = {}
-    tai_year = sq.sample(sq.discrete(tai_years))
+    tai_year = sq.sample(tai_years)
     us_china_war_tai_delay_has_occurred = False
     
     for y in years:
