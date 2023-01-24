@@ -2,9 +2,11 @@
 
 This is an integrated assessment model to assess broad expectations of the outcomes of the next 100 years, by considering the development of transformative artificial intellignece and, various catastrophic and existential risks. It works by essentially implementing a finite state machine / a continuous-time Markov Chain.
 
-**THIS IS UNFINISHED AND NOT READY FOR PRIMETIME. PLEASE DO NOT RE-SHARE.**
+**THIS IS UNFINISHED AND NOT READY FOR PRIMETIME. PLEASE DO NOT RE-SHARE. THIS MAY CHANGE DRAMATICALLY WITHOUT WARNING.** Note that there definitely needs to be and will be more documentation added - I know many aspects may currently be very hard to understand.
 
 It takes place with the following notebooks in order:
+
+* Start by installing pre-requisites: `pip3 install -r requirements.txt`
 
 * **["(1) Anchors"]((1)%20Anchors.ipynb):** Analysis of different anchors for the compute needs for a transformative AI, following Ajeya Cotra (2020)'s ["Forecasting Transformative AI with Biological Anchors"](https://www.lesswrong.com/posts/KrJfoZzpSDpnrv9va/draft-report-on-ai-timelines)
 
