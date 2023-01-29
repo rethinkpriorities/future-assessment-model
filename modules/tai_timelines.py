@@ -354,7 +354,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
 
     def define_event(verbose=False):
         tai_flop_size_ = variables['tai_flop_size']
-        if isinstance(tai_flop_size_, sq.BaseDistribution):
+        if sq.is_sampleable(tai_flop_size_):
             tai_flop_size_ = sq.sample(tai_flop_size_)
         else:
             tai_flop_size_ = sq.sample(sq.discrete(variables['tai_flop_size']))
@@ -373,9 +373,15 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
         initial_flop_per_dollar_ = 10 ** sq.sample(variables['initial_flop_per_dollar'])
         flop_halving_rate_ = sq.sample(variables['flop_halving_rate'])
         max_flop_per_dollar_ = 10 ** sq.sample(variables['max_flop_per_dollar'])
-        initial_pay_ = 10 ** sq.sample(variables['initial_pay'])
         gdp_growth_ = sq.sample(variables['gdp_growth'])
         max_gdp_frac_ = sq.sample(variables['max_gdp_frac'])
+
+        initial_pay_ = variables['tai_flop_size']
+        if sq.is_sampleable(initial_pay_):
+            initial_pay_ = sq.sample(initial_pay_)
+        else:
+            initial_pay_ = sq.sample(sq.discrete(variables['tai_flop_size']))
+        initial_pay_ = 10 ** initial_pay_
         
         willingness_ramp_happens = sq.event_occurs(variables.get('p_willingness_ramp', 0))
         if willingness_ramp_happens:
@@ -421,7 +427,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     print('-')
 
     initial_flop_s = variables['tai_flop_size']
-    if isinstance(initial_flop_s, sq.BaseDistribution):
+    if sq.is_sampleable(initial_flop_s):
         initial_flop_s = sq.sample(initial_flop_s, n=1000)
     else:
         initial_flop_s = sq.sample(sq.discrete(initial_flop_s), n=1000)
@@ -455,8 +461,12 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     max_flop_per_dollar_s = sq.sample(variables['max_flop_per_dollar'], n=1000)
     max_flop_per_dollar_p = print_graph(max_flop_per_dollar_s, label='MAX FLOP PER DOLLAR')
 
-    initial_pay_s = sq.sample(variables['initial_pay'], n=1000)
-    initial_pay_p = print_graph(initial_pay_s, label='INITIAL PAY')
+    initial_pay_s = variables['initial_pay']
+    if sq.is_sampleable(initial_pay_s):
+        initial_pay_s = sq.sample(initial_pay_s, n=1000)
+    else:
+        initial_pay_s = sq.sample(sq.discrete(initial_pay_s), n=1000)
+    initial_pay_p = print_graph(initial_pay_s, 'INITIAL PAY')
 
     gdp_growth_s = sq.sample(variables['gdp_growth'], n=1000)
     gdp_growth_p = print_graph(gdp_growth_s, label='GDP GROWTH', digits=2)
