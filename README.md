@@ -1,6 +1,6 @@
 # Future Assessment Model
 
-This is an integrated assessment model to assess broad expectations of the outcomes of the next 100 years, by considering the development of transformative artificial intellignece and, various catastrophic and existential risks. It works by essentially implementing a finite state machine / a continuous-time Markov Chain.
+This is an integrated assessment model to assess broad expectations of the outcomes of the next 100 years, by considering the development of transformative artificial intelligence and, various catastrophic and existential risks. It works by essentially implementing a finite state machine / a continuous-time Markov Chain.
 
 **THIS IS UNFINISHED AND NOT READY FOR PRIMETIME. PLEASE DO NOT RE-SHARE. THIS MAY CHANGE DRAMATICALLY WITHOUT WARNING.** Note that there definitely needs to be and will be more documentation added - I know many aspects may currently be very hard to understand.
 
