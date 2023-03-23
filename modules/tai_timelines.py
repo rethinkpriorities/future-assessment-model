@@ -176,10 +176,13 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                 if is_nonscaling_issue is None:
                     if isinstance(p_nonscaling_delay, np.ndarray) or isinstance(p_nonscaling_delay, list):
                         p_nonscaling_delay_ = p_nonscaling_delay[y - CURRENT_YEAR]
-                    elif p_nonscaling_delay is None or p_nonscaling_delay == 0:
-                        p_nonscaling_delay = 0
-                    elif not isinstance(p_nonscaling_delay, float):
-                        raise ValueError('p_nonscaling_delay not properly defined - must be float, 0, None, list, or np array')
+                    elif (p_nonscaling_delay is None or
+                          p_nonscaling_delay == 0 or
+                          p_nonscaling_delay == 1 or
+                          isinstance(p_nonscaling_delay, float)):
+                        p_nonscaling_delay_ = p_nonscaling_delay
+                    else:
+                        raise ValueError('p_nonscaling_delay not properly defined - must be float, 0, 1, None, list, or np array')
 
                     is_nonscaling_issue = sq.event(p_nonscaling_delay_)
                     nonscaling_countdown = nonscaling_delay_
