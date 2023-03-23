@@ -74,48 +74,6 @@ def possible_algo_reduction_fn(min_reduction, max_reduction, tai_flop_size):
     return min(max(min_reduction + round((tai_flop_size - 32) / 4), min_reduction), max_reduction)
 
 
-def derive_nonscaling_delay_curve(minimum, maximum, bottom_year, verbose=True):
-    def shape_curve(slope, shift, push):
-        years = list(range(CURRENT_YEAR, bottom_year))
-        year_cuts = [years[0], years[int(round(len(years) / 2))], years[-1]]
-        
-        out = [generalized_logistic_curve(x=y - CURRENT_YEAR,
-                                          slope=slope,
-                                          shift=shift,
-                                          push=push,
-                                          maximum=maximum,
-                                          minimum=minimum) for y in year_cuts]
-        return -np.mean([np.abs(minimum - out[0]) ** 2,
-                         np.abs(((minimum + maximum) / 2) - out[1]) ** 2,
-                         np.abs(maximum - out[2]) ** 2])
-
-    pbounds = {'slope': (0.01, 10),
-               'shift': (0.01, 10),
-               'push': (0.01, 10)}
-    optimizer = BayesianOptimization(f=shape_curve, pbounds=pbounds, verbose=verbose, allow_duplicate_points=True)
-    optimizer.maximize(init_points=40, n_iter=80)
-    params = optimizer.max['params']
-    if verbose:
-        print('Curve params found')
-        pprint(params)
-        print('-')
-
-    def p_nonscaling_delay(year):
-        if year == CURRENT_YEAR:
-            return minimum
-        elif year >= bottom_year:
-            return maximum
-        else:
-            return generalized_logistic_curve(x=year - CURRENT_YEAR,
-                                              slope=params['slope'],
-                                              shift=params['shift'],
-                                              push=params['push'],
-                                              maximum=maximum,
-                                              minimum=minimum)
-
-    return p_nonscaling_delay
-
-
 def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possible_algo_reduction_,
                         initial_flop_per_dollar_, flop_halving_rate_, max_flop_per_dollar_, initial_pay_,
                         gdp_growth_, max_gdp_frac_, willingness_ramp_, spend_doubling_time_, p_nonscaling_delay,
@@ -216,7 +174,13 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                 print('-$- {}/{}'.format(y, queue_tai_year))
             if (cost_of_tai_ * willingness_ramp_) <= willingness_ or y >= queue_tai_year:
                 if is_nonscaling_issue is None:
-                    p_nonscaling_delay_ = p_nonscaling_delay(y) if p_nonscaling_delay is not None else 0
+                    if isinstance(p_nonscaling_delay, np.ndarray) or isinstance(p_nonscaling_delay, list):
+                        p_nonscaling_delay_ = p_nonscaling_delay[y - CURRENT_YEAR]
+                    elif p_nonscaling_delay is None or p_nonscaling_delay == 0:
+                        p_nonscaling_delay = 0
+                    elif not isinstance(p_nonscaling_delay, float):
+                        raise ValueError('p_nonscaling_delay not properly defined - must be float, 0, None, list, or np array')
+
                     is_nonscaling_issue = sq.event(p_nonscaling_delay_)
                     nonscaling_countdown = nonscaling_delay_
                     if print_diagnostic:
@@ -340,18 +304,6 @@ def print_tai_arrival_stats(tai_years):
 
 def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                         dump_cache_file=None, reload_cache=False):
-
-    initial_chance_of_nonscaling_issue_ = variables.get('initial_chance_of_nonscaling_issue', 0)
-    final_chance_of_nonscaling_issue_ = variables.get('final_chance_of_nonscaling_issue', 0)
-    nonscaling_issue_bottom_year_ = variables.get('nonscaling_issue_bottom_year', 0)
-    if nonscaling_issue_bottom_year_ == 0:
-        p_nonscaling_delay = None
-    else:
-        print('Deriving nonscaling delay curve...')
-        p_nonscaling_delay = derive_nonscaling_delay_curve(minimum=initial_chance_of_nonscaling_issue_,
-                                                           maximum=final_chance_of_nonscaling_issue_,
-                                                           bottom_year=nonscaling_issue_bottom_year_)
-
     def define_event(verbose=False):
         tai_flop_size_ = variables['tai_flop_size']
         if sq.is_sampleable(tai_flop_size_):
@@ -391,6 +343,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
         
         initial_gdp_ = variables['initial_gdp']
         spend_doubling_time_ = sq.sample(variables['spend_doubling_time'])
+        p_nonscaling_delay_ = variables.get('p_nonscaling_delay', 0)
         nonscaling_delay_ = sq.sample(variables.get('nonscaling_delay', 0))
         willingness_spend_horizon_ = int(sq.sample(variables.get('willingness_spend_horizon', 1)))
         
@@ -406,7 +359,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                    max_gdp_frac_=max_gdp_frac_,
                                    willingness_ramp_=willingness_ramp_,
                                    spend_doubling_time_=spend_doubling_time_,
-                                   p_nonscaling_delay=p_nonscaling_delay,
+                                   p_nonscaling_delay=p_nonscaling_delay_,
                                    nonscaling_delay_=nonscaling_delay_,
                                    willingness_spend_horizon_=willingness_spend_horizon_,
                                    print_diagnostic=verbose)
