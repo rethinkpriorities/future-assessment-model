@@ -107,7 +107,9 @@ def tai_scenarios_module(y, state, verbose):
                         state['catastrophe'].append(state['category'])
                     state['terminate'] = True; state['final_year'] = y
             else:
-                pass # Don't deploy unsafe AI, retry next year
+                state['tai_type'] = 'agent' # Avoid re-rolling into tool AI
+                if verbose:
+                    print('{}: ...successfully coordinated to not deploy unsafe TAI'.format(y))
         else: # tool TAI
             if verbose:
                 print('{}: ...Tool TAI made'.format(y))
