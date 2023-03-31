@@ -331,11 +331,11 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
         gdp_growth_ = sq.sample(variables['gdp_growth'])
         max_gdp_frac_ = sq.sample(variables['max_gdp_frac'])
 
-        initial_pay_ = variables['tai_flop_size']
+        initial_pay_ = variables['initial_pay']
         if sq.is_sampleable(initial_pay_):
             initial_pay_ = sq.sample(initial_pay_)
         else:
-            initial_pay_ = sq.sample(sq.discrete(variables['tai_flop_size']))
+            initial_pay_ = sq.sample(sq.discrete(variables['initial_pay']))
         initial_pay_ = 10 ** initial_pay_
         
         willingness_ramp_happens = sq.event_occurs(variables.get('p_willingness_ramp', 0))
