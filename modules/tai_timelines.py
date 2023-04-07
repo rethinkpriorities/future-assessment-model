@@ -77,7 +77,7 @@ def possible_algo_reduction_fn(min_reduction, max_reduction, tai_flop_size):
 def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possible_algo_reduction_,
                         initial_flop_per_dollar_, flop_halving_rate_, max_flop_per_dollar_, initial_pay_,
                         gdp_growth_, max_gdp_frac_, willingness_ramp_, spend_doubling_time_, p_nonscaling_delay,
-                        nonscaling_delay_, willingness_spend_horizon_, print_diagnostic):
+                        nonscaling_delay_, willingness_spend_horizon_, print_diagnostic, variables):
     queue_tai_year = 99999
     plt.ioff()
     if print_diagnostic:
@@ -118,12 +118,12 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
             flop_needed_ = flop_needed(initial_flop=10 ** tai_flop_size_,
                                        doubling_rate=algo_doubling_rate_,
                                        possible_reduction=10 ** possible_algo_reduction_,
-                                       year=(y - CURRENT_YEAR))
+                                       year=(y - variables['CURRENT_YEAR']))
             
             flop_per_dollar_ = flop_per_dollar(initial_flop_per_dollar=initial_flop_per_dollar_,
                                                max_flop_per_dollar=max_flop_per_dollar_,
                                                halving_rate=flop_halving_rate_,
-                                               year=(y - CURRENT_YEAR))
+                                               year=(y - variables['CURRENT_YEAR']))
             
             if flop_per_dollar_ > 10 ** 200 or flop_needed_ > 10 ** 200:
                 flop_needed_ = int(flop_needed_)
@@ -137,7 +137,7 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                                               initial_pay=initial_pay_,
                                               spend_doubling_time=spend_doubling_time_,
                                               max_gdp_frac=max_gdp_frac_,
-                                              year=(y - CURRENT_YEAR))
+                                              year=(y - variables['CURRENT_YEAR']))
             
             if flop_per_dollar_ > 10 ** 200:
                 willingness_ = int(willingness_)
@@ -175,7 +175,7 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
             if (cost_of_tai_ * willingness_ramp_) <= willingness_ or y >= queue_tai_year:
                 if is_nonscaling_issue is None:
                     if isinstance(p_nonscaling_delay, np.ndarray) or isinstance(p_nonscaling_delay, list):
-                        p_nonscaling_delay_ = p_nonscaling_delay[y - CURRENT_YEAR]
+                        p_nonscaling_delay_ = p_nonscaling_delay[y - variables['CURRENT_YEAR']]
                     elif (p_nonscaling_delay is None or
                           p_nonscaling_delay == 0 or
                           p_nonscaling_delay == 1 or
@@ -208,9 +208,9 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                 
     if not tai_created:
         if print_diagnostic:
-            print('--- :/ TAI NOT CREATED BEFORE {}'.format(MAX_YEAR + 1))
+            print('--- :/ TAI NOT CREATED BEFORE {}'.format(variables['MAX_YEAR'] + 1))
             plot_tai(plt, years, cost_of_tai_collector, willingness_collector).show()
-        return MAX_YEAR + 1
+        return variables['MAX_YEAR'] + 1
 
 
 def print_graph(samples, label, reverse=False, digits=1):
@@ -228,15 +228,15 @@ def print_graph(samples, label, reverse=False, digits=1):
     return pctiles
 
 
-def print_tai_arrival_stats(tai_years):
+def print_tai_arrival_stats(tai_years, variables):
     print('## DISTRIBUTION OF TAI ARRIVAL DATE ##')
     pctiles = sq.get_percentiles(tai_years, percentiles=[5, 10, 15, 20, 25, 35, 50, 60, 75, 80, 90, 95])
-    pprint([str(o[0]) + '%: ' + (str(int(o[1])) if o[1] < MAX_YEAR else '>' + str(MAX_YEAR)) for o in pctiles.items()])
+    pprint([str(o[0]) + '%: ' + (str(int(o[1])) if o[1] < variables['MAX_YEAR'] else '>' + str(variables['MAX_YEAR'])) for o in pctiles.items()])
     print('-')
     print('-')
 
     print('## DISTRIBUTION OF RELATIVE TAI ARRIVAL DATE ##')
-    pprint([str(o[0]) + '%: ' + (str(int(o[1]) - CURRENT_YEAR) if o[1] < MAX_YEAR else '>' + str(MAX_YEAR - CURRENT_YEAR)) + ' years from now' for o in pctiles.items()])
+    pprint([str(o[0]) + '%: ' + (str(int(o[1]) - variables['CURRENT_YEAR']) if o[1] < variables['MAX_YEAR'] else '>' + str(variables['MAX_YEAR'] - variables['CURRENT_YEAR'])) + ' years from now' for o in pctiles.items()])
     print('-')
     print('-')
 
@@ -244,7 +244,7 @@ def print_tai_arrival_stats(tai_years):
     print('## TAI ARRIVAL DATE BY BIN ##')
 
     def bin_tai_yrs(low=None, hi=None):
-        low = CURRENT_YEAR if low is None else low
+        low = variables['CURRENT_YEAR'] if low is None else low
         if hi is None:
             r = np.mean([y >= low for y in tai_years])
         else:
@@ -252,7 +252,7 @@ def print_tai_arrival_stats(tai_years):
         return round(r * 100, 1)
 
 
-    print('This year: {}%'.format(bin_tai_yrs(hi=CURRENT_YEAR)))
+    print('This year: {}%'.format(bin_tai_yrs(hi=variables['CURRENT_YEAR'])))
     print('2024-2027: {}%'.format(bin_tai_yrs(2024, 2026)))
     print('2028-2029: {}%'.format(bin_tai_yrs(2027, 2029)))
     print('2030-2034: {}%'.format(bin_tai_yrs(2030, 2034)))
@@ -289,9 +289,9 @@ def print_tai_arrival_stats(tai_years):
     print('-')
     print('-')
 
-    tai_years_ = np.array([MAX_YEAR + 1 if t > MAX_YEAR else t for t in tai_years])
-    count, bins_count = np.histogram(tai_years_, bins=(MAX_YEAR - CURRENT_YEAR))
-    bins = np.round(np.array([b for b in bins_count[1:] if b <= MAX_YEAR]))
+    tai_years_ = np.array([variables['MAX_YEAR'] + 1 if t > variables['MAX_YEAR'] else t for t in tai_years])
+    count, bins_count = np.histogram(tai_years_, bins=(variables['MAX_YEAR'] - variables['CURRENT_YEAR']))
+    bins = np.round(np.array([b for b in bins_count[1:] if b <= variables['MAX_YEAR']]))
     pdf = count / sum(count)
     cdf = np.cumsum(pdf)
 
@@ -365,6 +365,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                    p_nonscaling_delay=p_nonscaling_delay_,
                                    nonscaling_delay_=nonscaling_delay_,
                                    willingness_spend_horizon_=willingness_spend_horizon_,
+                                   variables=variables,
                                    print_diagnostic=verbose)
 
     print('## RUN TIMELINES MODEL ##')
@@ -378,7 +379,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                n=runs)
 
     print('-')
-    print_tai_arrival_stats(tai_years)
+    print_tai_arrival_stats(tai_years, variables)
     print('-')
     print('-')
 
@@ -474,13 +475,13 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     print('## GDP Over Time ##')
     gdp_50 = np.array([gdp(initial_gdp=variables['initial_gdp'],
                            gdp_growth=gdp_growth_p[50],
-                           year=(y - CURRENT_YEAR)) for y in years])
+                           year=(y - variables['CURRENT_YEAR'])) for y in years])
     gdp_10 = np.array([gdp(initial_gdp=variables['initial_gdp'],
                            gdp_growth=gdp_growth_p[10],
-                           year=(y - CURRENT_YEAR)) for y in years])
+                           year=(y - variables['CURRENT_YEAR'])) for y in years])
     gdp_90 = np.array([gdp(initial_gdp=variables['initial_gdp'],
                            gdp_growth=gdp_growth_p[90],
-                           year=(y - CURRENT_YEAR)) for y in years])
+                           year=(y - variables['CURRENT_YEAR'])) for y in years])
     plt.plot(years, np.log10(gdp_10), linestyle='dashed', color='black')
     plt.plot(years, np.log10(gdp_50), color='black')
     plt.plot(years, np.log10(gdp_90), linestyle='dashed', color='black')
@@ -490,12 +491,12 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     for y in years[:10] + years[10::10]:
         outstr = 'Year: {} - GDP log 2022$USD {} (~{}) 90% CI {} (~{}) - {} (~{})'
         print(outstr.format(y,
-                            np.round(np.log10(gdp_50[y - CURRENT_YEAR]), 1),
-                            numerize(gdp_50[y - CURRENT_YEAR]),
-                            np.round(np.log10(gdp_10[y - CURRENT_YEAR]), 1),
-                            numerize(gdp_10[y - CURRENT_YEAR]),
-                            np.round(np.log10(gdp_90[y - CURRENT_YEAR]), 1),
-                            numerize(gdp_90[y - CURRENT_YEAR])))
+                            np.round(np.log10(gdp_50[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(gdp_50[y - variables['CURRENT_YEAR']]),
+                            np.round(np.log10(gdp_10[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(gdp_10[y - variables['CURRENT_YEAR']]),
+                            np.round(np.log10(gdp_90[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(gdp_90[y - variables['CURRENT_YEAR']])))
 
     print('-')
     print('-')
@@ -505,19 +506,19 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                                   initial_pay=10 ** initial_pay_p[50],
                                                   spend_doubling_time=spend_doubling_time_p[50],
                                                   max_gdp_frac=max_gdp_frac_p[50],
-                                                  year=(y - CURRENT_YEAR)) for y in years])
+                                                  year=(y - variables['CURRENT_YEAR'])) for y in years])
     willingness_10 = np.array([willingness_to_pay(initial_gdp=variables['initial_gdp'],
                                                   gdp_growth=gdp_growth_p[10],
                                                   initial_pay=10 ** initial_pay_p[10],
                                                   spend_doubling_time=spend_doubling_time_p[10],
                                                   max_gdp_frac=max_gdp_frac_p[10],
-                                                  year=(y - CURRENT_YEAR)) for y in years])
+                                                  year=(y - variables['CURRENT_YEAR'])) for y in years])
     willingness_90 = np.array([willingness_to_pay(initial_gdp=variables['initial_gdp'],
                                                   gdp_growth=gdp_growth_p[90],
                                                   initial_pay=10 ** initial_pay_p[90],
                                                   spend_doubling_time=spend_doubling_time_p[90],
                                                   max_gdp_frac=max_gdp_frac_p[90],
-                                                  year=(y - CURRENT_YEAR)) for y in years])
+                                                  year=(y - variables['CURRENT_YEAR'])) for y in years])
 
     plt.plot(years, np.log10(willingness_10), linestyle='dashed', color='black')
     plt.plot(years, np.log10(willingness_90), linestyle='dashed', color='black')
@@ -528,12 +529,12 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     for y in years[:10] + years[10::10]:
         outstr = 'Year: {} - willingness log 2022$USD per year {} (~{}) 90% CI {} (~{}) - {} (~{})'
         print(outstr.format(y,
-                            np.round(np.log10(willingness_50[y - CURRENT_YEAR]), 1),
-                            numerize(willingness_50[y - CURRENT_YEAR]),
-                            np.round(np.log10(willingness_10[y - CURRENT_YEAR]), 1),
-                            numerize(willingness_10[y - CURRENT_YEAR]),
-                            np.round(np.log10(willingness_90[y - CURRENT_YEAR]), 1),
-                            numerize(willingness_90[y - CURRENT_YEAR])))
+                            np.round(np.log10(willingness_50[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(willingness_50[y - variables['CURRENT_YEAR']]),
+                            np.round(np.log10(willingness_10[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(willingness_10[y - variables['CURRENT_YEAR']]),
+                            np.round(np.log10(willingness_90[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(willingness_90[y - variables['CURRENT_YEAR']])))
 
 
     print('-')
@@ -546,7 +547,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                      possible_reduction=10 ** possible_algo_reduction_fn(min_reduction_p[50],
                                                                                          max_reduction_p[50],
                                                                                          initial_flop_p[50]),
-                                     year=(y - CURRENT_YEAR)) for y in years])
+                                     year=(y - variables['CURRENT_YEAR'])) for y in years])
     flops_10 = np.array([flop_needed(initial_flop=10 ** initial_flop_p[10],
                                      doubling_rate=algo_halving_fn(algo_doubling_rate_min_p[10],
                                                                    algo_doubling_rate_max_p[10],
@@ -554,7 +555,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                      possible_reduction=10 ** possible_algo_reduction_fn(min_reduction_p[10],
                                                                                          max_reduction_p[10],
                                                                                          initial_flop_p[10]),
-                                     year=(y - CURRENT_YEAR)) for y in years])
+                                     year=(y - variables['CURRENT_YEAR'])) for y in years])
     flops_90 = np.array([flop_needed(initial_flop=10 ** initial_flop_p[90],
                                      doubling_rate=algo_halving_fn(algo_doubling_rate_min_p[90],
                                                                    algo_doubling_rate_max_p[90],
@@ -562,7 +563,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                      possible_reduction=10 ** possible_algo_reduction_fn(min_reduction_p[90],
                                                                                          max_reduction_p[90],
                                                                                          initial_flop_p[90]),
-                                     year=(y - CURRENT_YEAR)) for y in years])
+                                     year=(y - variables['CURRENT_YEAR'])) for y in years])
 
     plt.plot(years, np.log10(flops_10), linestyle='dashed', color='black')
     plt.plot(years, np.log10(flops_90), linestyle='dashed', color='black')
@@ -573,12 +574,12 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     for y in years[:10] + years[10::10]:
         outstr = 'Year: {} - log FLOP needed for TAI {} (~{}) 90% CI {} (~{}) - {} (~{})'
         print(outstr.format(y,
-                            np.round(np.log10(flops_50[y - CURRENT_YEAR]), 1),
-                            numerize(flops_50[y - CURRENT_YEAR]),
-                            np.round(np.log10(flops_10[y - CURRENT_YEAR]), 1),
-                            numerize(flops_10[y - CURRENT_YEAR]),
-                            np.round(np.log10(flops_90[y - CURRENT_YEAR]), 1),
-                            numerize(flops_90[y - CURRENT_YEAR])))
+                            np.round(np.log10(flops_50[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(flops_50[y - variables['CURRENT_YEAR']]),
+                            np.round(np.log10(flops_10[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(flops_10[y - variables['CURRENT_YEAR']]),
+                            np.round(np.log10(flops_90[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(flops_90[y - variables['CURRENT_YEAR']])))
 
     print('-')
     print('-')
@@ -586,15 +587,15 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     flop_per_dollar_50 = np.array([flop_per_dollar(initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[50],
                                                    max_flop_per_dollar=10 ** max_flop_per_dollar_p[50],
                                                    halving_rate=flop_halving_rate_p[50],
-                                                   year=(y - CURRENT_YEAR)) for y in years])
+                                                   year=(y - variables['CURRENT_YEAR'])) for y in years])
     flop_per_dollar_90 = np.array([flop_per_dollar(initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[90],
                                                    max_flop_per_dollar=10 ** max_flop_per_dollar_p[90],
                                                    halving_rate=flop_halving_rate_p[90],
-                                                   year=(y - CURRENT_YEAR)) for y in years])
+                                                   year=(y - variables['CURRENT_YEAR'])) for y in years])
     flop_per_dollar_10 = np.array([flop_per_dollar(initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[10],
                                                    max_flop_per_dollar=10 ** max_flop_per_dollar_p[10],
                                                    halving_rate=flop_halving_rate_p[10],
-                                                   year=(y - CURRENT_YEAR)) for y in years])
+                                                   year=(y - variables['CURRENT_YEAR'])) for y in years])
     plt.plot(years, np.log10(flop_per_dollar_10), linestyle='dashed', color='black')
     plt.plot(years, np.log10(flop_per_dollar_90), linestyle='dashed', color='black')
     plt.plot(years, np.log10(flop_per_dollar_50), color='black')
@@ -604,12 +605,12 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     for y in years[:10] + years[10::10]:
         outstr = 'Year: {} - log FLOP per 2022$1USD {} (~{}) 90% CI {} (~{}) - {} (~{})'
         print(outstr.format(y,
-                            np.round(np.log10(flop_per_dollar_50[y - CURRENT_YEAR]), 1),
-                            numerize(flop_per_dollar_50[y - CURRENT_YEAR]),
-                            np.round(np.log10(flop_per_dollar_10[y - CURRENT_YEAR]), 1),
-                            numerize(flop_per_dollar_10[y - CURRENT_YEAR]),
-                            np.round(np.log10(flop_per_dollar_90[y - CURRENT_YEAR]), 1),
-                            numerize(flop_per_dollar_90[y - CURRENT_YEAR])))
+                            np.round(np.log10(flop_per_dollar_50[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(flop_per_dollar_50[y - variables['CURRENT_YEAR']]),
+                            np.round(np.log10(flop_per_dollar_10[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(flop_per_dollar_10[y - variables['CURRENT_YEAR']]),
+                            np.round(np.log10(flop_per_dollar_90[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(flop_per_dollar_90[y - variables['CURRENT_YEAR']])))
 
     print('-')
     print('-')
@@ -655,7 +656,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
 
         for y in years[:10] + years[10::10]:
             outstr = 'Year: {} - chance of a nonscaling delay if TAI compute needs are otherwise met in this year: {}%'
-            print(outstr.format(y, int(round(p_delay_[y - CURRENT_YEAR] * 100))))
+            print(outstr.format(y, int(round(p_delay_[y - variables['CURRENT_YEAR']] * 100))))
 
     print('-')
     print('-')
@@ -668,7 +669,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                            initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[50],
                                            max_flop_per_dollar=10 ** max_flop_per_dollar_p[50],
                                            flop_halving_rate=flop_halving_rate_p[50],
-                                           year=(y - CURRENT_YEAR)) for y in years])
+                                           year=(y - variables['CURRENT_YEAR'])) for y in years])
     cost_of_tai_10 = np.array([cost_of_tai(initial_flop=10 ** initial_flop_p[10],
                                            possible_reduction=10 ** possible_algo_reduction_fn(min_reduction_p[10], max_reduction_p[10], initial_flop_p[10]),
                                            algo_doubling_rate=algo_halving_fn(algo_doubling_rate_min_p[10],
@@ -677,7 +678,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                            initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[10],
                                            max_flop_per_dollar=10 ** max_flop_per_dollar_p[10],
                                            flop_halving_rate=flop_halving_rate_p[10],
-                                           year=(y - CURRENT_YEAR)) for y in years])
+                                           year=(y - variables['CURRENT_YEAR'])) for y in years])
     cost_of_tai_90 = np.array([cost_of_tai(initial_flop=10 ** initial_flop_p[90],
                                            possible_reduction=10 ** possible_algo_reduction_fn(min_reduction_p[90], max_reduction_p[90], initial_flop_p[90]),
                                            algo_doubling_rate=algo_halving_fn(algo_doubling_rate_min_p[90],
@@ -686,7 +687,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                            initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[90],
                                            max_flop_per_dollar=10 ** max_flop_per_dollar_p[90],
                                            flop_halving_rate=flop_halving_rate_p[90],
-                                           year=(y - CURRENT_YEAR)) for y in years])
+                                           year=(y - variables['CURRENT_YEAR'])) for y in years])
 
     plt.plot(years, np.log10(cost_of_tai_50), color='black')
     plt.plot(years, np.log10(cost_of_tai_10), linestyle='dashed', color='black')
@@ -697,12 +698,12 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     for y in years[:10] + years[10::10]:
         outstr = 'Year: {} - {} log 2022$USD to buy TAI (~{}) 90% CI {} (~{}) - {} (~{})'
         print(outstr.format(y,
-                            np.round(np.log10(cost_of_tai_50[y - CURRENT_YEAR]), 1),
-                            numerize(cost_of_tai_50[y - CURRENT_YEAR]),
-                            np.round(np.log10(cost_of_tai_10[y - CURRENT_YEAR]), 1),
-                            numerize(cost_of_tai_10[y - CURRENT_YEAR]),
-                            np.round(np.log10(cost_of_tai_90[y - CURRENT_YEAR]), 1),
-                            numerize(cost_of_tai_90[y - CURRENT_YEAR])))
+                            np.round(np.log10(cost_of_tai_50[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(cost_of_tai_50[y - variables['CURRENT_YEAR']]),
+                            np.round(np.log10(cost_of_tai_10[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(cost_of_tai_10[y - variables['CURRENT_YEAR']]),
+                            np.round(np.log10(cost_of_tai_90[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(cost_of_tai_90[y - variables['CURRENT_YEAR']])))
 
     print('-')
     print('-')
@@ -715,7 +716,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                            initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[50],
                                            max_flop_per_dollar=10 ** max_flop_per_dollar_p[50],
                                            flop_halving_rate=flop_halving_rate_p[50],
-                                           year=(y - CURRENT_YEAR)) for y in years])
+                                           year=(y - variables['CURRENT_YEAR'])) for y in years])
     flop_at_max_10 = np.array([flop_at_max(initial_gdp=variables['initial_gdp'],
                                            gdp_growth=gdp_growth_p[10],
                                            initial_pay=10 ** initial_pay_p[10],
@@ -724,7 +725,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                            initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[10],
                                            max_flop_per_dollar=10 ** max_flop_per_dollar_p[10],
                                            flop_halving_rate=flop_halving_rate_p[10],
-                                           year=(y - CURRENT_YEAR)) for y in years])
+                                           year=(y - variables['CURRENT_YEAR'])) for y in years])
     flop_at_max_90 = np.array([flop_at_max(initial_gdp=variables['initial_gdp'],
                                            gdp_growth=gdp_growth_p[90],
                                            initial_pay=10 ** initial_pay_p[90],
@@ -733,7 +734,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                            initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[90],
                                            max_flop_per_dollar=10 ** max_flop_per_dollar_p[90],
                                            flop_halving_rate=flop_halving_rate_p[90],
-                                           year=(y - CURRENT_YEAR)) for y in years])
+                                           year=(y - variables['CURRENT_YEAR'])) for y in years])
 
     plt.plot(years, np.log10(flop_at_max_50), color='black')
     plt.plot(years, np.log10(flop_at_max_90), linestyle='dashed', color='black')
@@ -744,12 +745,12 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     for y in years[:10] + years[10::10]:
         outstr = 'Year: {} - max log FLOP {} (~{}) 90% CI {} (~{}) - {} (~{})'
         print(outstr.format(y,
-                            np.round(np.log10(flop_at_max_50[y - CURRENT_YEAR]), 1),
-                            numerize(flop_at_max_50[y - CURRENT_YEAR]),
-                            np.round(np.log10(flop_at_max_10[y - CURRENT_YEAR]), 1),
-                            numerize(flop_at_max_10[y - CURRENT_YEAR]),
-                            np.round(np.log10(flop_at_max_90[y - CURRENT_YEAR]), 1),
-                            numerize(flop_at_max_90[y - CURRENT_YEAR])))
+                            np.round(np.log10(flop_at_max_50[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(flop_at_max_50[y - variables['CURRENT_YEAR']]),
+                            np.round(np.log10(flop_at_max_10[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(flop_at_max_10[y - variables['CURRENT_YEAR']]),
+                            np.round(np.log10(flop_at_max_90[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(flop_at_max_90[y - variables['CURRENT_YEAR']])))
 
     for i in range(3):
         print('-')

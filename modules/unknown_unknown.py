@@ -1,5 +1,5 @@
-def unknown_unknown_scenarios_module(y, state, verbose):
-    if sq.event(p_unknown_unknown_xrisk(y - CURRENT_YEAR)):
+def unknown_unknown_scenarios_module(y, state, variables, verbose):
+    if sq.event(variables['p_unknown_unknown_xrisk'](y - variables['CURRENT_YEAR'])):
         if verbose:
             print('{}: ...XRISK from unknown unknown'.format(y))
         state['category'] = 'xrisk_unknown_unknown'

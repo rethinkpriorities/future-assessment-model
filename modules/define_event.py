@@ -12,7 +12,7 @@ extinctions = ['xrisk_full_unaligned_tai_extinction', 'xrisk_nukes_war', 'xrisk_
                'xrisk_bio_nonstate', 'xrisk_supervolcano']
 
 
-def define_event(verbosity=0):
+def define_event(variables, verbosity=0):
     if verbosity is True:
         verbosity = 1
 
@@ -29,7 +29,7 @@ def define_event(verbosity=0):
              'terminate': False, 'final_year': None, 'double_catastrophe_xrisk': None}
     allowed_state_keys = list(state.keys())
     collectors = {}
-    tai_year = sq.sample(sq.discrete(tai_years))
+    tai_year = sq.sample(sq.discrete(variables['tai_years']))
     us_china_war_tai_delay_has_occurred = False
     
     for y in years:
@@ -46,12 +46,13 @@ def define_event(verbosity=0):
         random.shuffle(modules)
         for module in modules:
             if not state['terminate']:
-                state = module(y, state, verbosity > 0)
+                state = module(y, state, variables, verbosity > 0)
         
         # Check for double dip catastrophe
         catastrophe_this_year = len(state['catastrophe']) > n_catastrophes
         state = check_for_double_dip_catastrophe(y,
                                                  state,
+                                                 variables,
                                                  catastrophe_this_year,
                                                  n_catastrophes,
                                                  verbosity > 0)
@@ -59,7 +60,7 @@ def define_event(verbosity=0):
         # Modify TAI arrival date for wars and catastrophes
         if not state['terminate'] and not state['tai']:
             if catastrophe_this_year:
-                delay = int(np.ceil(sq.sample(if_catastrophe_delay_tai_arrival_by_years)))
+                delay = int(np.ceil(sq.sample(variables['if_catastrophe_delay_tai_arrival_by_years'])))
                 tai_year += delay
                 if verbosity > 0:
                     print('...catastrophe delays TAI by {} years'.format(delay))
@@ -68,7 +69,7 @@ def define_event(verbosity=0):
                 not us_china_war_tai_delay_has_occurred and
                 state['war_belligerents'] == 'US/China'):
                 us_china_war_tai_delay_has_occurred = True
-                delay = int(np.ceil(sq.sample(if_us_china_war_delay_tai_arrival_by_years)))
+                delay = int(np.ceil(sq.sample(variables['if_us_china_war_delay_tai_arrival_by_years'])))
                 tai_year += delay
                 if verbosity > 0:
                     print('...US-China war delays TAI by {} years'.format(delay))

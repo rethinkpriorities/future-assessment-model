@@ -1,4 +1,5 @@
 bayesian-optimization
+dill
 jupyterlab
 matplotlib
 squigglepy

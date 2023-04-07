@@ -18,6 +18,9 @@ def numerize(num):
               'nonillion': 10 ** 30,
               'decillion': 10 ** 33}
 
+    if num < -1000:
+        return '-{}'.format(numerize(-num))
+
     if num < 1000:
         return num
 

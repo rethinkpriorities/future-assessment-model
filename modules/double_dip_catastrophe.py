@@ -1,10 +1,10 @@
-def check_for_double_dip_catastrophe(y, state, catastrophe_this_year, n_catastrophes, verbose):
+def check_for_double_dip_catastrophe(y, state, variables, catastrophe_this_year, n_catastrophes, verbose):
     if not state['terminate'] and catastrophe_this_year:
         if state['recent_catastrophe_year'] is None:
             state['recent_catastrophe_year'] = y
         else:
-            prior_catastrophe_within_range = n_catastrophes > 0 and y < (state['recent_catastrophe_year'] + extinction_from_double_catastrophe_range)
-            if prior_catastrophe_within_range and sq.event(p_extinction_from_double_catastrophe):
+            prior_catastrophe_within_range = n_catastrophes > 0 and y < (state['recent_catastrophe_year'] + variables['extinction_from_double_catastrophe_range'])
+            if prior_catastrophe_within_range and sq.event(variables['p_extinction_from_double_catastrophe']):
                 previous_catastrophe = state['catastrophe'][-2]
                 current_catastrophe = state['catastrophe'][-1]
                 if verbose:
