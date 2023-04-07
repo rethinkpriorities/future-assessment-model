@@ -11,7 +11,7 @@
 ```
 mkdir future-assessment-model
 sudo yum groupinstall "Development Tools"
-sudo yum install htop tmux zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel yum-utils
+sudo yum install htop tmux zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel libpcap-devel xz-devel yum-utils nss-devel libffi-devel wget
 ```
 
 * Step 4: Install Python 3.9, since Squigglepy doesn't work on earlier versions of Python (3.7) included by default:
@@ -31,13 +31,13 @@ cd /tmp/openssl/openssl-1.0.2q
 ./config
 make
 sudo make install
-cd Python-3.9.6
+cd /opt/Python-3.9.6
 
 # At this point you must `vim Modules/Setup`, search for SSL, and uncomment lines
 
 sudo ./configure --enable-optimizations
 sudo make
-sudo make install 
+sudo make install
 cd ..
 sudo rm -f /opt/Python-3.9.6.tgz
 
