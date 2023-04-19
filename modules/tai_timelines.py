@@ -74,10 +74,11 @@ def possible_algo_reduction_fn(min_reduction, max_reduction, tai_flop_size):
     return min(max(min_reduction + round((tai_flop_size - 32) / 4), min_reduction), max_reduction)
 
 
+# TODO: Refactor
 def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possible_algo_reduction_,
                         initial_flop_per_dollar_, flop_halving_rate_, max_flop_per_dollar_, initial_pay_,
                         gdp_growth_, max_gdp_frac_, willingness_ramp_, spend_doubling_time_, spend_doubling_time_2025_,
-                        p_nonscaling_delay, nonscaling_delay_, willingness_spend_horizon_, print_diagnostic, variables):
+                        nonscaling_delay_, willingness_spend_horizon_, print_diagnostic, variables):
     queue_tai_year = 99999
     plt.ioff()
     if print_diagnostic:
@@ -116,9 +117,18 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
 
         if willingness_spend_horizon_ > 1:
             print('We are willing to spend over {} years to make TAI'.format(willingness_spend_horizon_))
-            
-        print(('If a non-scaling delay happens, it will take an additional {} years to produce TAI due' +
-               ' to issues unrelated to scaling FLOP').format(np.round(nonscaling_delay_, 1)))
+
+        if nonscaling_delay_ is not None:
+            if len(nonscaling_delay_) > 1:
+                print('There are {} ways a non-scaling delay could happen.'.format(len(nonscaling_delay_)))
+                for name, delay in nonscaling_delay_.items():
+                    print('- {}: additional {} years if it happens'.format(name, delay['length']))
+                    plot_nonscaling_delay(plt, years, delay['prob'])
+            else:
+                delay = list(nonscaling_delay_.items())[0][1]
+                print(('If a non-scaling delay happens, it will take an additional {} years to produce TAI due' +
+                       ' to issues unrelated to scaling FLOP').format(delay['length']))
+                plot_nonscaling_delay(plt, years, delay['prob'])
         print('---')
     
     tai_created = False
@@ -202,22 +212,44 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                 print('-$- {}/{}'.format(y, queue_tai_year))
             if (cost_of_tai_ * willingness_ramp_) <= willingness_ or y >= queue_tai_year:
                 if is_nonscaling_issue is None:
-                    if isinstance(p_nonscaling_delay, np.ndarray) or isinstance(p_nonscaling_delay, list):
-                        p_nonscaling_delay_ = p_nonscaling_delay[y - variables['CURRENT_YEAR']]
-                    elif (p_nonscaling_delay is None or
-                          p_nonscaling_delay == 0 or
-                          p_nonscaling_delay == 1 or
-                          isinstance(p_nonscaling_delay, float)):
-                        p_nonscaling_delay_ = p_nonscaling_delay
-                    else:
-                        raise ValueError('p_nonscaling_delay not properly defined - must be float, 0, 1, None, list, or np array')
+                    if nonscaling_delay_ is not None:
+                        if isinstance(nonscaling_delay_, dict):
+                            if len(nonscaling_delay_) == 1:
+                                nonscaling_delay_ = list(nonscaling_delay_.items())[0][1]
+                                p_nonscaling_delay_ = nonscaling_delay_['prob']
+                                # TODO: executing an arbitrary function from cache is not good
+                                p_nonscaling_delay_ = np.array([p_nonscaling_delay_(y) for y in years])
+                                p_nonscaling_delay_ = p_nonscaling_delay_[y - variables['CURRENT_YEAR']]
+                                is_nonscaling_issue = sq.event(p_nonscaling_delay_)
+                                nonscaling_delay_ = nonscaling_delay_['length']
+                                nonscaling_countdown = nonscaling_delay_
+                                if print_diagnostic:
+                                    print('-- {} p_nonscaling_issue={}'.format('Nonscaling delay occured' if is_nonscaling_issue else 'Nonscaling issue did not occur',
+                                                                               np.round(p_nonscaling_delay_, 4)))
+                            else:
+                                nonscaling_delay__ = nonscaling_delay_
+                                for name, delay in nonscaling_delay__.items():
+                                    p_nonscaling_delay_ = delay['prob']
+                                    p_nonscaling_delay_ = np.array([p_nonscaling_delay_(y) for y in years])
+                                    # TODO: executing an arbitrary function from cache is not good
+                                    p_nonscaling_delay_ = p_nonscaling_delay_[y - variables['CURRENT_YEAR']]
+                                    this_nonscaling_issue = sq.event(p_nonscaling_delay_)
+                                    if print_diagnostic:
+                                        print('-- {} p_nonscaling_issue p={} -> {}'.format(name,
+                                                                                           np.round(p_nonscaling_delay_, 4),
+                                                                                           'Nonscaling delay occured' if this_nonscaling_issue else 'Nonscaling issue did not occur',))
+                                    if this_nonscaling_issue:
+                                        if not is_nonscaling_issue:
+                                            is_nonscaling_issue = True
+                                            nonscaling_delay_ = sq.sample(delay['length'])
+                                            nonscaling_countdown = nonscaling_delay_
+                                        else:
+                                            nonscaling_delay_ += sq.sample(delay['length'])
+                                            nonscaling_countdown = nonscaling_delay_
+                        else:
+                            raise ValueError('nonscaling delay information must be passed as a dictionary')
 
-                    is_nonscaling_issue = sq.event(p_nonscaling_delay_)
-                    nonscaling_countdown = nonscaling_delay_
-                    if print_diagnostic:
-                        print('-- {} p_nonscaling_issue={}'.format('Nonscaling delay occured' if is_nonscaling_issue else 'Nonscaling issue did not occur',
-                                                                   np.round(p_nonscaling_delay_, 4)))
-                
+                    
                 if not is_nonscaling_issue or nonscaling_countdown <= 0.1:
                     if print_diagnostic:
                         print('--- /!\ TAI CREATED in {}'.format(y))
@@ -375,8 +407,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
         initial_gdp_ = variables['initial_gdp']
         spend_doubling_time_ = sq.sample(variables['spend_doubling_time'])
         spend_doubling_time_2025_ = sq.sample(variables['2025_spend_doubling_time']) if variables.get('2025_spend_doubling_time') else spend_doubling_time_
-        p_nonscaling_delay_ = variables.get('p_nonscaling_delay', 0)
-        nonscaling_delay_ = sq.sample(variables.get('nonscaling_delay', 0))
+        nonscaling_delay_ = variables.get('nonscaling_delay')
         willingness_spend_horizon_ = int(sq.sample(variables.get('willingness_spend_horizon', 1)))
         
         return run_tai_model_round(initial_gdp_=initial_gdp_,
@@ -392,12 +423,19 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                    willingness_ramp_=willingness_ramp_,
                                    spend_doubling_time_=spend_doubling_time_,
                                    spend_doubling_time_2025_=spend_doubling_time_2025_,
-                                   p_nonscaling_delay=p_nonscaling_delay_,
                                    nonscaling_delay_=nonscaling_delay_,
                                    willingness_spend_horizon_=willingness_spend_horizon_,
                                    variables=variables,
                                    print_diagnostic=verbose)
 
+    for i in range(3):
+        print('-')
+        print('-')
+        print('## SAMPLE RUN {} ##'.format(i + 1))
+        define_event(verbose=True)
+
+    print('-')
+    print('-')
     print('## RUN TIMELINES MODEL ##')
     tai_years = bayes.bayesnet(define_event,
                                verbose=True,
@@ -460,28 +498,6 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
 
     max_gdp_frac_s = sq.sample(variables['max_gdp_frac'], n=1000)
     max_gdp_frac_p = print_graph(max_gdp_frac_s, label='MAX GDP FRAC', digits=5)
-
-    if variables.get('nonscaling_delay', 0) != 0:
-        nonscaling_delay_s = sq.sample(variables['nonscaling_delay'], n=1000)
-        nonscaling_delay_p = print_graph(nonscaling_delay_s, label='NONSCALING DELAY', digits=0)
-
-    if variables.get('initial_chance_of_nonscaling_issue', 0) != 0:
-        initial_chance_of_nonscaling_issue_s = sq.sample(variables['initial_chance_of_nonscaling_issue'], n=1000)
-        initial_chance_of_nonscaling_issue_p = print_graph(initial_chance_of_nonscaling_issue_s,
-                                                           label='INITIAL CHANCE OF NONSCALING ISSUE',
-                                                           digits=0)
-
-    if variables.get('initial_chance_of_nonscaling_issue', 0) != 0:
-        final_chance_of_nonscaling_issue_s = sq.sample(variables['final_chance_of_nonscaling_issue'], n=1000)
-        final_chance_of_nonscaling_issue_p = print_graph(final_chance_of_nonscaling_issue_s,
-                                                         label='FINAL CHANCE OF NONSCALING ISSUE',
-                                                         digits=0)
-
-    if variables.get('nonscaling_issue_bottom_year', 0) != 0:
-        nonscaling_issue_bottom_year_s = sq.sample(variables['nonscaling_issue_bottom_year'], n=1000)
-        nonscaling_issue_bottom_year_p = print_graph(nonscaling_issue_bottom_year_s,
-                                                     label='NONSCALING BOTTOM YEAR',
-                                                     digits=0)
 
     willingness_ramp = variables.get('willingness_ramp', 0)
     if willingness_ramp != 0:
@@ -675,6 +691,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                                                                          algo_doubling_rate_max_p[50],
                                                                                          t), 2)))
 
+    # TODO:
     if variables.get('initial_chance_of_nonscaling_issue', 0) != 0:
         print('-')
         print('-')
@@ -781,11 +798,4 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                             numerize(flop_at_max_10[y - variables['CURRENT_YEAR']]),
                             np.round(np.log10(flop_at_max_90[y - variables['CURRENT_YEAR']]), 1),
                             numerize(flop_at_max_90[y - variables['CURRENT_YEAR']])))
-
-    for i in range(3):
-        print('-')
-        print('-')
-        print('## SAMPLE RUN {} ##'.format(i + 1))
-        define_event(verbose=True)
-
     return None

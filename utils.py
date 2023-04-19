@@ -52,6 +52,65 @@ def generalized_logistic_curve(x, slope, shift, push, maximum, minimum):
      return minimum + ((maximum - minimum) / ((1 + shift * math.exp(-slope * x)) ** (1 / push)))
 
 
+def derive_nonscaling_delay_curve(nonscaling_points, verbose=True):
+    years = list(range(CURRENT_YEAR, nonscaling_points[-1][0]))
+    year_cuts = [y[0] for y in nonscaling_points]
+    desired = [d[1] for d in nonscaling_points]
+    minimum = desired[0]
+    maximum = desired[-1]
+    bottom_year = year_cuts[-1]
+        
+    def shape_curve(slope, shift, push):
+        out = [generalized_logistic_curve(x=y - CURRENT_YEAR,
+                                          slope=slope,
+                                          shift=shift,
+                                          push=push,
+                                          maximum=maximum,
+                                          minimum=minimum) for y in year_cuts]
+        return -np.mean([np.abs(out[i] - desired[i]) for i in range(len(out))])
+
+
+    pbounds = {'slope': (0.01, 10),
+               'shift': (0.01, 10),
+               'push': (0.01, 10)}
+    optimizer = BayesianOptimization(f=shape_curve, pbounds=pbounds, verbose=verbose, allow_duplicate_points=True)
+    optimizer.maximize(init_points=40, n_iter=80)
+    params = optimizer.max['params']
+    if verbose:
+        print('Curve params found')
+        pprint(params)
+        print('-')
+
+
+    def p_nonscaling_delay(year):
+        if year == CURRENT_YEAR:
+            return minimum
+        elif year >= bottom_year:
+            return maximum
+        else:
+            return generalized_logistic_curve(x=year - CURRENT_YEAR,
+                                              slope=params['slope'],
+                                              shift=params['shift'],
+                                              push=params['push'],
+                                              maximum=maximum,
+                                              minimum=minimum)
+
+    return p_nonscaling_delay
+
+
+def plot_nonscaling_delay(plt, years, p_nonscaling_delay):
+	print('## Chance of nonscaling delay ##')
+	p_delay_ = np.array([p_nonscaling_delay(y) for y in years])
+	plt.plot(years, p_delay_, color='black')
+	plt.ylabel('chance of a non-scaling delay')
+	plt.show()
+
+	for y in years[:10] + years[10::10]:
+		outstr = 'Year: {} - chance of a nonscaling delay if TAI compute needs are otherwise met in this year: {}%'
+		print(outstr.format(y, int(round(p_delay_[y - CURRENT_YEAR] * 100))))
+
+
+
 def plot_tai(plt, years, cost_of_tai_collector, willingness_collector):
     cost = np.log10(np.array(cost_of_tai_collector))
     willingness = np.log10(np.array(willingness_collector))
