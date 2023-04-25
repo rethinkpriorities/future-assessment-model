@@ -218,7 +218,10 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                                 nonscaling_delay_ = list(nonscaling_delay_.items())[0][1]
                                 p_nonscaling_delay_ = nonscaling_delay_['prob']
                                 # TODO: executing an arbitrary function from cache is not good
-                                p_nonscaling_delay_ = np.array([p_nonscaling_delay_(y) for y in years])
+                                if callable(p_nonscaling_delay_):
+                                    p_nonscaling_delay_ = np.array([p_nonscaling_delay_(y) for y in years])
+                                else:
+                                    p_nonscaling_delay_ = np.array([p_nonscaling_delay_ for y in years])
                                 p_nonscaling_delay_ = p_nonscaling_delay_[y - variables['CURRENT_YEAR']]
                                 is_nonscaling_issue = sq.event(p_nonscaling_delay_)
                                 nonscaling_delay_ = nonscaling_delay_['length']
