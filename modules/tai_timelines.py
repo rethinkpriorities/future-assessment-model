@@ -133,6 +133,7 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
     
     tai_created = False
     is_nonscaling_issue = None
+    nonscaling_delay_out = 0
     for y in years:
         if not tai_created:
             flop_needed_ = flop_needed(initial_flop=10 ** tai_flop_size_,
@@ -245,9 +246,11 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                                         if not is_nonscaling_issue:
                                             is_nonscaling_issue = True
                                             nonscaling_delay_ = sq.sample(delay['length'])
+                                            nonscaling_delay_out = nonscaling_delay_
                                             nonscaling_countdown = nonscaling_delay_
                                         else:
                                             nonscaling_delay_ += sq.sample(delay['length'])
+                                            nonscaling_delay_out = nonscaling_delay_
                                             nonscaling_countdown = nonscaling_delay_
                         else:
                             raise ValueError('nonscaling delay information must be passed as a dictionary')
@@ -257,7 +260,7 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                     if print_diagnostic:
                         print('--- /!\ TAI CREATED in {}'.format(y))
                         plot_tai(plt, years, cost_of_tai_collector, willingness_collector).show()
-                    return y
+                    return {'tai_year': y, 'delay': nonscaling_delay_out}
                 else:
                     if print_diagnostic:
                         print('/!\ FLOP for TAI sufficient but needs {} more years to solve non-scaling issues'.format(np.round(nonscaling_countdown, 1)))
@@ -273,7 +276,7 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
         if print_diagnostic:
             print('--- :/ TAI NOT CREATED BEFORE {}'.format(variables['MAX_YEAR'] + 1))
             plot_tai(plt, years, cost_of_tai_collector, willingness_collector).show()
-        return variables['MAX_YEAR'] + 1
+        return {'tai_year': variables['MAX_YEAR'] + 1, 'delay': nonscaling_delay_out}
 
 
 def print_graph(samples, label, reverse=False, digits=1):
@@ -330,27 +333,42 @@ def print_tai_arrival_stats(tai_years, variables):
     print('2110-2119: {}%'.format(bin_tai_yrs(2110, 2119)))
     print('>2120: {}%'.format(bin_tai_yrs(low=2120)))
     print('-')
+    print('-')
 
-    print('## TAI ARRIVAL DATE BY YEAR - COMPARE TO BENCHMARK ##')
+    print('## TAI ARRIVAL DATE BY YEAR ##')
     print('By EOY 2024: {}%'.format(bin_tai_yrs(hi=2024)))
     print('By EOY 2025: {}%'.format(bin_tai_yrs(hi=2025)))
     print('By EOY 2027: {}% (within 5 yrs)'.format(bin_tai_yrs(hi=2027)))
-    print('By EOY 2030: {}% (Ajeya 2022: 15%)'.format(bin_tai_yrs(hi=2030)))
     print('By EOY 2032: {}% (within 10yrs)'.format(bin_tai_yrs(hi=2032)))
-    print('By EOY 2036: {}% (Holden 2021 benchmark - 10%-50%, Holden 2021: 10%; Ajeya 2022: 35%)'.format(bin_tai_yrs(hi=2036)))
-    print('By EOY 2040: {}% (Ajeya 2022: 50%)'.format(bin_tai_yrs(hi=2040)))
-    print('By EOY 2042: {}% (FTX: 20%, 10%-45%)'.format(bin_tai_yrs(hi=2042)))
+    print('By EOY 2040: {}%'.format(bin_tai_yrs(hi=2040)))
     print('By EOY 2047: {}% (within 25yrs)'.format(bin_tai_yrs(hi=2047)))
-    print('By EOY 2050: {}% (Ajeya 2020: 50%, Ajeya 2022: 60%)'.format(bin_tai_yrs(hi=2050)))
-    print('By EOY 2060: {}% (Holden 2021 benchmark - 25%-75%, Holden 2021: 50%)'.format(bin_tai_yrs(hi=2060)))
-    print('By EOY 2070: {}% (Carlsmith: 50%)'.format(bin_tai_yrs(hi=2070)))
+    print('By EOY 2050: {}%'.format(bin_tai_yrs(hi=2050)))
+    print('By EOY 2060: {}%'.format(bin_tai_yrs(hi=2060)))
+    print('By EOY 2070: {}%'.format(bin_tai_yrs(hi=2070)))
     print('By EOY 2072: {}% (within 50yrs)'.format(bin_tai_yrs(hi=2072)))
     print('By EOY 2078: {}% (within my expected lifetime)'.format(bin_tai_yrs(hi=2078)))
-    print('By EOY 2099: {}% (FTX: 60%, >30%)'.format(bin_tai_yrs(hi=2099)))
-    print('By EOY 2100: {}% (Holden 2021 benchmark - 33%-90%, Holden 2021: 66%)'.format(bin_tai_yrs(hi=2100)))
-    print('By EOY 2122: {}% (within 100yrs)'.format(bin_tai_yrs(hi=2122)))
+    print('By EOY 2100: {}%'.format(bin_tai_yrs(hi=2100)))
+    print('By EOY 2122: {}%'.format(bin_tai_yrs(hi=2122)))
     print('-')
     print('-')
+    
+    print('## TAI ARRIVAL DATE BY YEAR - COMPARE TO AJEYA 2020 BENCHMARK ##')
+    print('By EOY 2028 - this model {}% vs. Ajeya 2020 5%'.format(bin_tai_yrs(hi=2028)))
+    print('By EOY 2032 - this model {}% vs. Ajeya 2020 10%'.format(bin_tai_yrs(hi=2032)))
+    print('By EOY 2035 - this model {}% vs. Ajeya 2020 15%'.format(bin_tai_yrs(hi=2035)))
+    print('By EOY 2040 - this model {}% vs. Ajeya 2020 25%'.format(bin_tai_yrs(hi=2040)))
+    print('By EOY 2053 - this model {}% vs. Ajeya 2020 50%'.format(bin_tai_yrs(hi=2053)))
+    print('By EOY 2062 - this model {}% vs. Ajeya 2020 60%'.format(bin_tai_yrs(hi=2062)))
+    print('By EOY 2084 - this model {}% vs. Ajeya 2020 75%'.format(bin_tai_yrs(hi=2084)))
+    print('By EOY 2100 - this model {}% vs. Ajeya 2020 78%'.format(bin_tai_yrs(hi=2100)))
+    
+    print('-')
+    print('-')
+    print('## TAI ARRIVAL DATE BY YEAR - COMPARE TO AJEYA 2022 BENCHMARK ##')
+    print('By EOY 2030 - this model {}% vs. Ajeya 2022 15%'.format(bin_tai_yrs(hi=2030)))
+    print('By EOY 2036 - this model {}% vs. Ajeya 2022 35%'.format(bin_tai_yrs(hi=2036)))
+    print('By EOY 2040 - this model {}% vs. Ajeya 2022 50%'.format(bin_tai_yrs(hi=2040)))
+    print('By EOY 2050 - this model {}% vs. Ajeya 2020 60%'.format(bin_tai_yrs(hi=2050)))
 
     tai_years_ = np.array([variables['MAX_YEAR'] + 1 if t > variables['MAX_YEAR'] else t for t in tai_years])
     count, bins_count = np.histogram(tai_years_, bins=(variables['MAX_YEAR'] - variables['CURRENT_YEAR']))
@@ -450,7 +468,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                n=runs)
 
     print('-')
-    print_tai_arrival_stats(tai_years, variables)
+    print_tai_arrival_stats([t['tai_year'] for t in tai_years], variables)
     print('-')
     print('-')
 
@@ -682,8 +700,8 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     print('-')
     print('## Halving time (years) of compute requirements ##')
     flop_per_dollar_ = np.array([algo_halving_fn(algo_doubling_rate_min_p[50],
-                                                  algo_doubling_rate_max_p[50],
-                                                  t) for t in tai_sizes])
+                                                 algo_doubling_rate_max_p[50],
+                                                 t) for t in tai_sizes])
     plt.plot(tai_sizes, flop_per_dollar_)
     plt.ylabel('number of years for compute requirements to halve')
     plt.show()
@@ -789,8 +807,8 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     plt.plot(years, np.log10(flop_at_max_50), color='black')
     plt.plot(years, np.log10(flop_at_max_90), linestyle='dashed', color='black')
     plt.plot(years, np.log10(flop_at_max_10), linestyle='dashed', color='black')
-    plt.show()
     plt.ylabel('max log FLOP bought given willingness to spend')
+    plt.show()
 
     for y in years[:10] + years[10::10]:
         outstr = 'Year: {} - max log FLOP {} (~{}) 90% CI {} (~{}) - {} (~{})'
@@ -801,4 +819,13 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                             numerize(flop_at_max_10[y - variables['CURRENT_YEAR']]),
                             np.round(np.log10(flop_at_max_90[y - variables['CURRENT_YEAR']]), 1),
                             numerize(flop_at_max_90[y - variables['CURRENT_YEAR']])))
+
+    print('-')
+    print('-')
+    print('## Aggregate nonscaling delay ##')
+    delay_samples = [t['delay'] for t in tai_years]
+    pprint(sq.get_percentiles(delay_samples, digits=0))
+    plt.hist(delay_samples, bins=200)
+    plt.xlabel('total years of delay')
+    plt.show()
     return None
