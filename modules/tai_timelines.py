@@ -117,18 +117,6 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
 
         if willingness_spend_horizon_ > 1:
             print('We are willing to spend over {} years to make TAI'.format(willingness_spend_horizon_))
-
-        if nonscaling_delay_ is not None:
-            if len(nonscaling_delay_) > 1:
-                print('There are {} ways a non-scaling delay could happen.'.format(len(nonscaling_delay_)))
-                for name, delay in nonscaling_delay_.items():
-                    print('- {}: additional {} years if it happens'.format(name, delay['length']))
-                    plot_nonscaling_delay(plt, years, delay['prob'])
-            else:
-                delay = list(nonscaling_delay_.items())[0][1]
-                print(('If a non-scaling delay happens, it will take an additional {} years to produce TAI due' +
-                       ' to issues unrelated to scaling FLOP').format(delay['length']))
-                plot_nonscaling_delay(plt, years, delay['prob'])
         print('---')
     
     tai_created = False
@@ -246,10 +234,15 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                                         if not is_nonscaling_issue:
                                             is_nonscaling_issue = True
                                             nonscaling_delay_ = sq.sample(delay['length'])
+                                            if print_diagnostic:
+                                                print('-- -- delay is for +{} years'.format(int(np.ceil(nonscaling_delay_))))
                                             nonscaling_delay_out = nonscaling_delay_
                                             nonscaling_countdown = nonscaling_delay_
                                         else:
-                                            nonscaling_delay_ += sq.sample(delay['length'])
+                                            this_nonscaling_delay = sq.sample(delay['length'])
+                                            if print_diagnostic:
+                                                print('-- -- delay is for +{} years'.format(int(np.ceil(this_nonscaling_delay))))
+                                            nonscaling_delay_ += this_nonscaling_delay
                                             nonscaling_delay_out = nonscaling_delay_
                                             nonscaling_countdown = nonscaling_delay_
                         else:
@@ -263,7 +256,7 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                     return {'tai_year': y, 'delay': nonscaling_delay_out}
                 else:
                     if print_diagnostic:
-                        print('/!\ FLOP for TAI sufficient but needs {} more years to solve non-scaling issues'.format(np.round(nonscaling_countdown, 1)))
+                        print('/!\ FLOP for TAI sufficient but needs {} more years to solve non-scaling issues'.format(int(np.ceil(nonscaling_countdown))))
                     nonscaling_countdown -= 1
             elif (not is_nonscaling_issue and willingness_spend_horizon_ > 1 and
                   spend_tai_years <= willingness_spend_horizon_ and y + math.ceil(spend_tai_years) < queue_tai_year):
@@ -714,9 +707,6 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
 
     # TODO:
     if variables.get('initial_chance_of_nonscaling_issue', 0) != 0:
-        print('-')
-        print('-')
-        print('## Chance of nonscaling delay ##')
         p_delay_ = np.array([p_nonscaling_delay(y) for y in years])
         plt.plot(years, p_delay_, color='black')
         plt.ylabel('chance of a non-scaling delay')
@@ -820,6 +810,24 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                             np.round(np.log10(flop_at_max_90[y - variables['CURRENT_YEAR']]), 1),
                             numerize(flop_at_max_90[y - variables['CURRENT_YEAR']])))
 
+    nonscaling_delay_ = variables.get('nonscaling_delay')
+    if nonscaling_delay_ is not None:
+        print('-')
+        print('-')
+        print('## Nonscaling delay ##')
+        if len(nonscaling_delay_) > 1:
+            print('There are {} ways a non-scaling delay could happen.'.format(len(nonscaling_delay_)))
+            for name, delay in nonscaling_delay_.items():
+                print('- {}: additional {} years if it happens'.format(name, delay['length']))
+                pprint(sq.get_percentiles(sq.sample(delay['length'], n=1000), digits=0))
+                plot_nonscaling_delay(plt, years, delay['prob'])
+        else:
+            delay = list(nonscaling_delay_.items())[0][1]
+            print(('If a non-scaling delay happens, it will take an additional {} years to produce TAI due' +
+                   ' to issues unrelated to scaling FLOP').format(delay['length']))
+            pprint(sq.get_percentiles(sq.sample(delay['length'], n=1000)))
+            plot_nonscaling_delay(plt, years, delay['prob'])
+
     print('-')
     print('-')
     print('## Aggregate nonscaling delay ##')
@@ -828,4 +836,5 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     plt.hist(delay_samples, bins=200)
     plt.xlabel('total years of delay')
     plt.show()
+
     return None
