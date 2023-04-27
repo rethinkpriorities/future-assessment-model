@@ -379,79 +379,80 @@ def print_tai_arrival_stats(tai_years, variables):
     plt.show()
 
 
+def define_tai_timeline_event(verbose=False):
+    tai_flop_size_ = variables['tai_flop_size']
+    if sq.is_sampleable(tai_flop_size_):
+        tai_flop_size_ = sq.sample(tai_flop_size_)
+    else:
+        tai_flop_size_ = sq.sample(sq.discrete(variables['tai_flop_size']))
+
+    if tai_flop_size_ > 300:
+        tai_flop_size_ = int(tai_flop_size_) # Handle overflow errors
+    
+    algo_doubling_rate_ = algo_halving_fn(sq.sample(variables['algo_doubling_rate_min']),
+                                          sq.sample(variables['algo_doubling_rate_max']),
+                                          tai_flop_size_)
+    
+    possible_algo_reduction_ = possible_algo_reduction_fn(sq.sample(variables['min_reduction']),
+                                                          sq.sample(variables['max_reduction']),
+                                                          tai_flop_size_)
+    
+    initial_flop_per_dollar_ = 10 ** sq.sample(variables['initial_flop_per_dollar'])
+    flop_halving_rate_ = sq.sample(variables['flop_halving_rate'])
+    max_flop_per_dollar_ = 10 ** sq.sample(variables['max_flop_per_dollar'])
+    gdp_growth_ = sq.sample(variables['gdp_growth'])
+    max_gdp_frac_ = sq.sample(variables['max_gdp_frac'])
+
+    initial_pay_ = variables['initial_pay']
+    if sq.is_sampleable(initial_pay_):
+        initial_pay_ = sq.sample(initial_pay_)
+    else:
+        initial_pay_ = sq.sample(sq.discrete(variables['initial_pay']))
+    initial_pay_ = 10 ** initial_pay_
+    
+    willingness_ramp_happens = sq.event_occurs(variables.get('p_willingness_ramp', 0))
+    if willingness_ramp_happens:
+        willingness_ramp_ = sq.sample(variables.get('willingness_ramp', 1))
+    else:
+        willingness_ramp_ = 1
+    
+    initial_gdp_ = variables['initial_gdp']
+    spend_doubling_time_ = sq.sample(variables['spend_doubling_time'])
+    spend_doubling_time_2025_ = sq.sample(variables['2025_spend_doubling_time']) if variables.get('2025_spend_doubling_time') else spend_doubling_time_
+    nonscaling_delay_ = variables.get('nonscaling_delay')
+    willingness_spend_horizon_ = int(sq.sample(variables.get('willingness_spend_horizon', 1)))
+    
+    return run_tai_model_round(initial_gdp_=initial_gdp_,
+                               tai_flop_size_=tai_flop_size_,
+                               algo_doubling_rate_=algo_doubling_rate_,
+                               possible_algo_reduction_=possible_algo_reduction_,
+                               initial_flop_per_dollar_=initial_flop_per_dollar_,
+                               flop_halving_rate_=flop_halving_rate_,
+                               max_flop_per_dollar_=max_flop_per_dollar_,
+                               initial_pay_=initial_pay_,
+                               gdp_growth_=gdp_growth_,
+                               max_gdp_frac_=max_gdp_frac_,
+                               willingness_ramp_=willingness_ramp_,
+                               spend_doubling_time_=spend_doubling_time_,
+                               spend_doubling_time_2025_=spend_doubling_time_2025_,
+                               nonscaling_delay_=nonscaling_delay_,
+                               willingness_spend_horizon_=willingness_spend_horizon_,
+                               variables=variables,
+                               print_diagnostic=verbose)
+
+
 def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                         dump_cache_file=None, reload_cache=False):
-    def define_event(verbose=False):
-        tai_flop_size_ = variables['tai_flop_size']
-        if sq.is_sampleable(tai_flop_size_):
-            tai_flop_size_ = sq.sample(tai_flop_size_)
-        else:
-            tai_flop_size_ = sq.sample(sq.discrete(variables['tai_flop_size']))
-
-        if tai_flop_size_ > 300:
-            tai_flop_size_ = int(tai_flop_size_) # Handle overflow errors
-        
-        algo_doubling_rate_ = algo_halving_fn(sq.sample(variables['algo_doubling_rate_min']),
-                                              sq.sample(variables['algo_doubling_rate_max']),
-                                              tai_flop_size_)
-        
-        possible_algo_reduction_ = possible_algo_reduction_fn(sq.sample(variables['min_reduction']),
-                                                              sq.sample(variables['max_reduction']),
-                                                              tai_flop_size_)
-        
-        initial_flop_per_dollar_ = 10 ** sq.sample(variables['initial_flop_per_dollar'])
-        flop_halving_rate_ = sq.sample(variables['flop_halving_rate'])
-        max_flop_per_dollar_ = 10 ** sq.sample(variables['max_flop_per_dollar'])
-        gdp_growth_ = sq.sample(variables['gdp_growth'])
-        max_gdp_frac_ = sq.sample(variables['max_gdp_frac'])
-
-        initial_pay_ = variables['initial_pay']
-        if sq.is_sampleable(initial_pay_):
-            initial_pay_ = sq.sample(initial_pay_)
-        else:
-            initial_pay_ = sq.sample(sq.discrete(variables['initial_pay']))
-        initial_pay_ = 10 ** initial_pay_
-        
-        willingness_ramp_happens = sq.event_occurs(variables.get('p_willingness_ramp', 0))
-        if willingness_ramp_happens:
-            willingness_ramp_ = sq.sample(variables.get('willingness_ramp', 1))
-        else:
-            willingness_ramp_ = 1
-        
-        initial_gdp_ = variables['initial_gdp']
-        spend_doubling_time_ = sq.sample(variables['spend_doubling_time'])
-        spend_doubling_time_2025_ = sq.sample(variables['2025_spend_doubling_time']) if variables.get('2025_spend_doubling_time') else spend_doubling_time_
-        nonscaling_delay_ = variables.get('nonscaling_delay')
-        willingness_spend_horizon_ = int(sq.sample(variables.get('willingness_spend_horizon', 1)))
-        
-        return run_tai_model_round(initial_gdp_=initial_gdp_,
-                                   tai_flop_size_=tai_flop_size_,
-                                   algo_doubling_rate_=algo_doubling_rate_,
-                                   possible_algo_reduction_=possible_algo_reduction_,
-                                   initial_flop_per_dollar_=initial_flop_per_dollar_,
-                                   flop_halving_rate_=flop_halving_rate_,
-                                   max_flop_per_dollar_=max_flop_per_dollar_,
-                                   initial_pay_=initial_pay_,
-                                   gdp_growth_=gdp_growth_,
-                                   max_gdp_frac_=max_gdp_frac_,
-                                   willingness_ramp_=willingness_ramp_,
-                                   spend_doubling_time_=spend_doubling_time_,
-                                   spend_doubling_time_2025_=spend_doubling_time_2025_,
-                                   nonscaling_delay_=nonscaling_delay_,
-                                   willingness_spend_horizon_=willingness_spend_horizon_,
-                                   variables=variables,
-                                   print_diagnostic=verbose)
-
     for i in range(3):
         print('-')
         print('-')
         print('## SAMPLE RUN {} ##'.format(i + 1))
-        define_event(verbose=True)
+        define_tai_timeline_event(verbose=True)
 
     print('-')
     print('-')
     print('## RUN TIMELINES MODEL ##')
-    tai_years = bayes.bayesnet(define_event,
+    tai_years = bayes.bayesnet(define_tai_timeline_event,
                                verbose=True,
                                raw=True,
                                cores=cores,
@@ -705,7 +706,6 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                                                                          algo_doubling_rate_max_p[50],
                                                                                          t), 2)))
 
-    # TODO:
     if variables.get('initial_chance_of_nonscaling_issue', 0) != 0:
         p_delay_ = np.array([p_nonscaling_delay(y) for y in years])
         plt.plot(years, p_delay_, color='black')
@@ -830,7 +830,27 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
 
     print('-')
     print('-')
-    print('## Aggregate nonscaling delay ##')
+    print('## Aggregate nonscaling delay probability ##')
+
+    def bin_tai_delay_by_year(tai_years, low=None, hi=None):
+        low = variables['CURRENT_YEAR'] if low is None else low
+        if hi is None:
+            tai_years = [y for y in tai_years if y['tai_year'] >= low]
+        else:
+            tai_years = [y for y in tai_years if (y['tai_year'] >= low) and (y['tai_year'] <= hi)]
+        return int(round(np.mean([y['delay'] > 0 for y in tai_years]) * 100))
+
+    print('If TAI compute level achieved in 2023-2026... {}% chance of TAI nonscaling delay'.format(bin_tai_delay_by_year(tai_years, 2023, 2026)))
+    print('If TAI compute level achieved in 2027-2030... {}% chance of TAI nonscaling delay'.format(bin_tai_delay_by_year(tai_years, 2027, 2030)))
+    print('If TAI compute level achieved in 2031-2035... {}% chance of TAI nonscaling delay'.format(bin_tai_delay_by_year(tai_years, 2031, 2035)))
+    print('If TAI compute level achieved in 2036-2040... {}% chance of TAI nonscaling delay'.format(bin_tai_delay_by_year(tai_years, 2036, 2040)))
+    print('If TAI compute level achieved in 2041-2050... {}% chance of TAI nonscaling delay'.format(bin_tai_delay_by_year(tai_years, 2041, 2050)))
+    print('If TAI compute level achieved in 2051-2060... {}% chance of TAI nonscaling delay'.format(bin_tai_delay_by_year(tai_years, 2051, 2060)))
+    print('If TAI compute level achieved in 2061-2100... {}% chance of TAI nonscaling delay'.format(bin_tai_delay_by_year(tai_years, 2061, 2100)))
+
+    print('-')
+    print('-')
+    print('## Aggregate nonscaling delay length ##')
     delay_samples = [t['delay'] for t in tai_years]
     pprint(sq.get_percentiles(delay_samples, digits=0))
     plt.hist(delay_samples, bins=200)
