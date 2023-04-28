@@ -258,14 +258,18 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                                             is_nonscaling_issue = True
                                             nonscaling_delay_ = sq.sample(delay['length'])
                                             if print_diagnostic:
-                                                print('-- -- delay is for +{} years'.format(int(np.ceil(nonscaling_delay_))))
+                                                print('-- -- this delay is {} years (total delay {} years)'.format(int(np.ceil(nonscaling_delay_)),
+                                                                                                                   int(np.ceil(nonscaling_delay_))))
                                             nonscaling_delay_out = nonscaling_delay_
                                             nonscaling_countdown = nonscaling_delay_
                                         else:
                                             this_nonscaling_delay = sq.sample(delay['length'])
+                                            nonscaling_delay_out = nonscaling_delay_
+                                            max_delay = np.max([nonscaling_delay_, this_nonscaling_delay])
+                                            nonscaling_delay_ = int(np.ceil(max_delay + this_nonscaling_delay / 4))
                                             if print_diagnostic:
-                                                print('-- -- delay is for +{} years'.format(int(np.ceil(this_nonscaling_delay))))
-                                            nonscaling_delay_ += this_nonscaling_delay
+                                                print('-- -- this delay is {} years (total delay {} years)'.format(int(np.ceil(this_nonscaling_delay)),
+                                                                                                                   int(np.ceil(nonscaling_delay_))))
                                             nonscaling_delay_out = nonscaling_delay_
                                             nonscaling_countdown = nonscaling_delay_
                         else:
@@ -276,7 +280,7 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                     if print_diagnostic:
                         print('--- /!\ TAI CREATED in {}'.format(y))
                         plot_tai(plt, years, cost_of_tai_collector, willingness_collector).show()
-                    return {'tai_year': y, 'delay': nonscaling_delay_out}
+                    return {'tai_year': int(y), 'delay': int(nonscaling_delay_out)}
                 else:
                     if print_diagnostic:
                         print('/!\ FLOP for TAI sufficient but needs {} more years to solve non-scaling issues'.format(int(np.ceil(nonscaling_countdown))))
@@ -292,7 +296,7 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
         if print_diagnostic:
             print('--- :/ TAI NOT CREATED BEFORE {}'.format(variables['MAX_YEAR'] + 1))
             plot_tai(plt, years, cost_of_tai_collector, willingness_collector).show()
-        return {'tai_year': variables['MAX_YEAR'] + 1, 'delay': nonscaling_delay_out}
+        return {'tai_year': int(variables['MAX_YEAR'] + 1), 'delay': int(nonscaling_delay_out)}
 
 
 def print_graph(samples, label, reverse=False, digits=1):
