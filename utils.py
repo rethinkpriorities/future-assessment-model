@@ -110,17 +110,6 @@ def plot_nonscaling_delay(plt, years, p_nonscaling_delay):
 		print(outstr.format(y, int(round(p_delay_[y - CURRENT_YEAR] * 100))))
 
 
-
-def plot_tai(plt, years, cost_of_tai_collector, willingness_collector):
-    cost = np.log10(np.array(cost_of_tai_collector))
-    willingness = np.log10(np.array(willingness_collector))
-    plt.plot(years[:len(cost)], cost, label='Cost of TAI')
-    plt.plot(years[:len(willingness)], willingness, label='Willingness to pay for TAI')
-    plt.legend()
-    plt.ylabel('log $')
-    return plt
-
-
 def savitzky_golay(y, window_size, order, deriv=0, rate=1):
     r"""Smooth (and optionally differentiate) data with a Savitzky-Golay filter.
     The Savitzky-Golay filter removes high frequency noise from data.

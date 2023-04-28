@@ -3,6 +3,16 @@ import numpy as np
 from bayes_opt import BayesianOptimization
 
 
+def plot_tai(plt, years, cost_of_tai_collector, willingness_collector):
+    cost = np.log10(np.array(cost_of_tai_collector))
+    willingness = np.log10(np.array(willingness_collector))
+    plt.plot(years[:len(cost)], cost, label='Cost of TAI')
+    plt.plot(years[:len(willingness)], willingness, label='Willingness to pay for TAI')
+    plt.legend()
+    plt.ylabel('log $')
+    return plt
+
+
 def gdp(initial_gdp, gdp_growth, year):
     return initial_gdp * (gdp_growth ** year)
 
@@ -96,20 +106,32 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                                                                                      np.round(flop_halving_rate_, 1),
                                                                                      np.round(math.log10(max_flop_per_dollar_), 1),
                                                                                      numerize(max_flop_per_dollar_)))
+        # Ensure 2023-2025 era doubling time is always faster
+        if spend_doubling_time_ > spend_doubling_time_2025_:
+            spend_doubling_time_2025_ = spend_doubling_time_
+
+        # Cap initial pay at max GDP frac
+        initial_pay_ = willingness_to_pay(initial_gdp=initial_gdp_,
+                                          gdp_growth=gdp_growth_,
+                                          initial_pay=initial_pay_,
+                                          spend_doubling_time=1,
+                                          max_gdp_frac=max_gdp_frac_,
+                                          year=0)
+
         if spend_doubling_time_2025_ != spend_doubling_time_:
             print(('We are initially willing to pay {} log 2022$USD (~{}). This doubles every {} years until 2025, and then doubles every {} years to a max of {}% of GDP. ' +
                    'GDP grows at a rate of {}x per year.').format(np.round(math.log10(initial_pay_), 1),
                                                                   numerize(initial_pay_),
                                                                   np.round(spend_doubling_time_2025_, 1),
                                                                   np.round(spend_doubling_time_, 1),
-                                                                  np.round(max_gdp_frac_, 6),
+                                                                  np.round(max_gdp_frac_ * 100, 6),
                                                                   np.round(gdp_growth_, 3)))
         else:
             print(('We are initially willing to pay {} log 2022$USD (~{}). This doubles every {} years to a max of {}% of GDP. ' +
                    'GDP grows at a rate of {}x per year.').format(np.round(math.log10(initial_pay_), 1),
                                                                   numerize(initial_pay_),
                                                                   np.round(spend_doubling_time_, 1),
-                                                                  np.round(max_gdp_frac_, 6),
+                                                                  np.round(max_gdp_frac_ * 100, 6),
                                                                   np.round(gdp_growth_, 3)))
 
         if willingness_ramp_ < 1:
@@ -159,21 +181,22 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                                                        spend_doubling_time=spend_doubling_time_2025_,
                                                        max_gdp_frac=max_gdp_frac_,
                                                        year=2025 - variables['CURRENT_YEAR'])
-                willingness_ = willingness_to_pay(initial_gdp=initial_gdp_,
+                gdp_2025_ = 10 ** gdp(initial_gdp=np.log10(initial_gdp_), gdp_growth=gdp_growth_, year=2025 - variables['CURRENT_YEAR'])
+                willingness_ = willingness_to_pay(initial_gdp=gdp_2025_,
                                                   gdp_growth=gdp_growth_,
                                                   initial_pay=willingness_2025_,
                                                   spend_doubling_time=spend_doubling_time_,
                                                   max_gdp_frac=max_gdp_frac_,
                                                   year=y - 2025)
             
+            if print_diagnostic:
+                cost_of_tai_collector.append(cost_of_tai_)
+                willingness_collector.append(willingness_)
+            
             if flop_per_dollar_ > 10 ** 200:
                 willingness_ = int(willingness_)
             if willingness_ > 10 ** 200:
                 flop_per_dollar_ = int(flop_per_dollar_)
-            
-            if print_diagnostic:
-                cost_of_tai_collector.append(cost_of_tai_)
-                willingness_collector.append(willingness_)
             
             total_compute_ = willingness_ * flop_per_dollar_
             
