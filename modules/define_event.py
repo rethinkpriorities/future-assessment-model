@@ -20,11 +20,11 @@ def define_event(variables, verbosity=0):
         start1 = time.time()
 
     state = {'category': 'boring', 'tai': False, 'tai_year': None, 'tai_type': None,
-             'nano': False, 'wars': [], 'war': False, 'war_start_year': None,
-             'war_end_year': None, 'russia_nuke_first': False, 'china_nuke_first': False,
-             'war_belligerents': None, 'peace_until': None, 'engineered_pathogen': False,
-             'natural_pathogen': False, 'lab_leak': False, 'state_bioweapon': False,
-             'nonstate_bioweapon': False, 'averted_misalignment': False,
+             'tai_alignment_state': None, 'nano': False, 'wars': [], 'war': False,
+             'war_start_year': None, 'war_end_year': None, 'russia_nuke_first': False,
+             'china_nuke_first': False, 'war_belligerents': None, 'peace_until': None,
+             'engineered_pathogen': False, 'natural_pathogen': False, 'lab_leak': False,
+             'state_bioweapon': False, 'nonstate_bioweapon': False, 'averted_misalignment': False,
              'nuclear_weapon_used': False, 'catastrophe': [], 'recent_catastrophe_year': None,
              'terminate': False, 'final_year': None, 'double_catastrophe_xrisk': None}
     allowed_state_keys = list(state.keys())
@@ -46,7 +46,7 @@ def define_event(variables, verbosity=0):
         random.shuffle(modules)
         for module in modules:
             if not state['terminate']:
-                state = module(y, state, variables, verbosity > 0)
+                state = module(y, state, variables, verbosity)
         
         # Check for double dip catastrophe
         catastrophe_this_year = len(state['catastrophe']) > n_catastrophes
@@ -55,7 +55,7 @@ def define_event(variables, verbosity=0):
                                                  variables,
                                                  catastrophe_this_year,
                                                  n_catastrophes,
-                                                 verbosity > 0)
+                                                 verbosity)
 
         # Modify TAI arrival date for wars and catastrophes
         if not state['terminate'] and not state['tai']:
