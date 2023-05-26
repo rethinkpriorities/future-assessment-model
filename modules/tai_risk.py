@@ -42,6 +42,14 @@ def attempt_to_avert_misaligned_tai(state, variables, y, verbosity, intentional_
         state['catastrophe'].append(state['category'])
         state['terminate'] = True
         state['final_year'] = y
+    elif intentional_misuse and p_event(variables, 'p_intentional_tai_singleton_creates_extinction', verbosity):
+        if verbosity:
+            print('{}: ...XRISK from TAI intentional misuse - attempt at singleton causes extinction :('.format(y))
+        state['category'] = 'xrisk_tai_misuse_extinction'
+        state['tai_type'] = 'agent'
+        state['tai_alignment_state'] = 'deliberate_misuse'
+        state['terminate'] = True
+        state['final_year'] = y
     else:
         if verbosity:
             print('{}: ...XRISK from {} (singleton) :('.format(y, msg))

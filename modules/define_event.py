@@ -2,14 +2,16 @@ import random
 import time
 
 
-STATES = ['boring', 'xrisk_tai_misuse', 'aligned_tai', 'xrisk_full_unaligned_tai_extinction',
-          'xrisk_full_unaligned_tai_singleton', 'xrisk_subtly_unaligned_tai',
-          'xrisk_unknown_unknown', 'xrisk_nanotech', 'xrisk_nukes_war', 'xrisk_nukes_accident',
-          'xrisk_bio_accident', 'xrisk_bio_war', 'xrisk_bio_nonstate', 'xrisk_supervolcano']
+STATES = ['boring', 'xrisk_tai_misuse', 'xrisk_tai_misuse_extinction', 'aligned_tai',
+          'xrisk_full_unaligned_tai_extinction', 'xrisk_full_unaligned_tai_singleton',
+          'xrisk_subtly_unaligned_tai', 'xrisk_unknown_unknown', 'xrisk_nanotech',
+          'xrisk_nukes_war', 'xrisk_nukes_accident', 'xrisk_bio_accident', 'xrisk_bio_war',
+          'xrisk_bio_nonstate', 'xrisk_supervolcano']
 
-extinctions = ['xrisk_full_unaligned_tai_extinction', 'xrisk_nukes_war', 'xrisk_nukes_accident',
-               'xrisk_unknown_unknown', 'xrisk_nanotech', 'xrisk_bio_accident', 'xrisk_bio_war',
-               'xrisk_bio_nonstate', 'xrisk_supervolcano']
+extinctions = ['xrisk_full_unaligned_tai_extinction', 'xrisk_tai_misuse_extinction',
+               'xrisk_nukes_war', 'xrisk_nukes_accident', 'xrisk_unknown_unknown',
+               'xrisk_nanotech', 'xrisk_bio_accident', 'xrisk_bio_war', 'xrisk_bio_nonstate',
+               'xrisk_supervolcano']
 
 
 def define_event(variables, verbosity=0):
