@@ -53,6 +53,12 @@ def generalized_logistic_curve(x, slope, shift, push, maximum, minimum):
 
 
 def derive_nonscaling_delay_curve(nonscaling_points, verbose=True):
+    if isinstance(nonscaling_points, dict):
+        init_year = nonscaling_points['init']
+        nonscaling_points = nonscaling_points['points']
+    else:
+        init_year = CURRENT_YEAR
+
     years = list(range(CURRENT_YEAR, nonscaling_points[-1][0]))
     year_cuts = [y[0] for y in nonscaling_points]
     desired = [d[1] for d in nonscaling_points]
@@ -83,8 +89,11 @@ def derive_nonscaling_delay_curve(nonscaling_points, verbose=True):
 
 
     def p_nonscaling_delay(year):
-        if year == CURRENT_YEAR:
-            return minimum
+        if year <= init_year:
+            if init_year != CURRENT_YEAR:
+                return 0
+            else:
+                return minimum
         elif year >= bottom_year:
             return maximum
         else:
