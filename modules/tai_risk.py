@@ -73,8 +73,7 @@ def tai_alignment(y, state, variables, verbosity):
     aligned_by_default = p_event(variables, 'p_tai_aligned_by_default', verbosity)
     fully_aligned_by_default = aligned_by_default and p_event(variables, 'p_subtle_alignment_solved_if_aligned_by_default', verbosity)
 
-    solved_alignment = p_event(variables['p_alignment_solved'](state['war'],
-                                                               y - variables['CURRENT_YEAR'],
+    solved_alignment = p_event(variables['p_alignment_solved'](y - variables['CURRENT_YEAR'],
                                                                first_attempt=state['tai_type'] is None),
                                'p_alignment_solved',
                                verbosity)
