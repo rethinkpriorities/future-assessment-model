@@ -1,5 +1,5 @@
 def check_for_time_of_perils(y, state, variables, verbosity):
-    if state['category'] == 'aligned_tai' and not state['time_of_perils_end_calculated']:
+    if state['tai_type'] == 'aligned_agent' and not state['time_of_perils_end_calculated']:
         if p_event(variables, 'tai_ends_time_of_perils', verbosity):
             if verbosity:
                 print('{}: Aligned TAI conclusively ends the time of perils! Happy future! :D'.format(y))

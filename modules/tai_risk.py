@@ -110,8 +110,7 @@ def deploy_tai(y, state, variables, verbosity):
         if flop_ > pasta:
             if verbosity:
                 print('{}: ...Achieved aligned TAI (aligned by default)'.format(y))
-            state['category'] = 'aligned_tai'
-            state['tai_type'] = 'agent'
+            state['tai_type'] = 'aligned_agent'
             state['tai'] = True
             state['tai_year'] = y
 
@@ -119,8 +118,7 @@ def deploy_tai(y, state, variables, verbosity):
         if flop_ > pasta:
             if verbosity:
                 print('{}: ...Achieved aligned TAI (aligned via work, {} attempt)'.format(y, 'first' if state['tai_type'] is None else '2nd+'))
-            state['category'] = 'aligned_tai'
-            state['tai_type'] = 'agent'
+            state['tai_type'] = 'aligned_agent'
             state['tai'] = True
             state['tai_year'] = y
 
@@ -147,7 +145,7 @@ def deploy_tai(y, state, variables, verbosity):
 # TODO: TAI or nearness to TAI creates great power war
 # TODO: Catastrophes from AI
 def tai_scenarios_module(y, state, variables, verbosity):
-    if state['tai_type'] != 'abandoned' and not 'aligned_tai' in state['category']:
+    if state['tai_type'] != 'abandoned' and not state['tai_type'] != 'aligned_agent':
         flop_ = np.log10(variables['effective_flop'])
 
         # TODO: Find some way to not hardcore these
