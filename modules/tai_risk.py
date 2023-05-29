@@ -1,12 +1,4 @@
-def p_event(variables, label, verbosity):
-    if isinstance(variables, dict):
-        p = variables[label]
-    else:
-        p = variables
-    outcome = sq.event(p)
-    if verbosity > 1:
-        print('-- sampling {} p={} outcome={}'.format(label, p, outcome))
-    return outcome
+import numpy as np
 
 
 def deliberate_misuse(state, variables, verbosity):
@@ -42,6 +34,8 @@ def attempt_to_avert_misaligned_tai(state, variables, y, verbosity, intentional_
         state['catastrophe'].append(state['category'])
         state['terminate'] = True
         state['final_year'] = y
+        state['tai'] = True
+        state['tai_year'] = y
     elif intentional_misuse and p_event(variables, 'p_intentional_tai_singleton_creates_extinction', verbosity):
         if verbosity:
             print('{}: ...XRISK from TAI intentional misuse - attempt at singleton causes extinction :('.format(y))
@@ -50,6 +44,8 @@ def attempt_to_avert_misaligned_tai(state, variables, y, verbosity, intentional_
         state['tai_alignment_state'] = 'deliberate_misuse'
         state['terminate'] = True
         state['final_year'] = y
+        state['tai'] = True
+        state['tai_year'] = y
     else:
         if verbosity:
             print('{}: ...XRISK from {} (singleton) :('.format(y, msg))
@@ -65,6 +61,9 @@ def attempt_to_avert_misaligned_tai(state, variables, y, verbosity, intentional_
         state['catastrophe'].append(state['category'])
         state['terminate'] = True
         state['final_year'] = y
+        state['tai'] = True
+        state['tai_year'] = y
+
     return state
 
 
@@ -77,7 +76,7 @@ def tai_alignment(y, state, variables, verbosity):
                                                                first_attempt=state['tai_type'] is None),
                                'p_alignment_solved',
                                verbosity)
-    solved_subtle_alignment = p_event(variables, 'p_subtle_alignment_solved', verbosity)
+    solved_subtle_alignment = p_event(variables, 'p_subtle_alignment_solved', verbosity) if solved_alignment else False
 
     if aligned_by_default and fully_aligned_by_default:
         state['tai_alignment_state'] = 'fully_aligned_by_default'
@@ -89,8 +88,6 @@ def tai_alignment(y, state, variables, verbosity):
         state['tai_alignment_state'] = 'subtly_misaligned'
     elif not solved_alignment:
         state['tai_alignment_state'] = 'blatantly_misaligned'
-    else:
-        raise ValueError('Coding logic error - this should not happen')
 
     return state
 
@@ -105,29 +102,42 @@ def coordinate_against_deployment(y, state, variables, verbosity):
 
 
 def deploy_tai(y, state, variables, verbosity):
+    # TODO: Update
+    flop_ = np.log10(variables['effective_flop'])
+    pasta = variables['threat_model'][1][1]
+
     if state['tai_alignment_state'] == 'fully_aligned_by_default':
-        if verbosity:
-            print('{}: ...Achieved aligned TAI (aligned by default), happy future! :D'.format(y))
-        state['category'] = 'aligned_tai'
-        state['tai_type'] = 'agent'
-        state['terminate'] = True
-        state['final_year'] = y
+        if flop_ > pasta:
+            if verbosity:
+                print('{}: ...Achieved aligned TAI (aligned by default), happy future! :D'.format(y))
+            state['category'] = 'aligned_tai'
+            state['tai_type'] = 'agent'
+            state['terminate'] = True
+            state['final_year'] = y
+            state['tai'] = True
+            state['tai_year'] = y
 
     elif state['tai_alignment_state'] == 'fully_aligned_by_work':
-        if verbosity:
-            print('{}: ...Achieved aligned TAI (aligned via work, {} attempt), happy future! :D'.format(y, 'first' if state['tai_type'] is None else '2nd+'))
-        state['category'] = 'aligned_tai'
-        state['tai_type'] = 'agent'
-        state['terminate'] = True
-        state['final_year'] = y
+        if flop_ > pasta:
+            if verbosity:
+                print('{}: ...Achieved aligned TAI (aligned via work, {} attempt), happy future! :D'.format(y, 'first' if state['tai_type'] is None else '2nd+'))
+            state['category'] = 'aligned_tai'
+            state['tai_type'] = 'agent'
+            state['terminate'] = True
+            state['final_year'] = y
+            state['tai'] = True
+            state['tai_year'] = y
 
     elif state['tai_alignment_state'] == 'subtly_misaligned':
-        if verbosity:
-            print('{}: ...XRISK from subtly unaligned TAI :('.format(y))
-        state['category'] = 'xrisk_subtly_unaligned_tai'
-        state['tai_type'] = 'agent'
-        state['terminate'] = True
-        state['final_year'] = y
+        if flop_ > pasta:
+            if verbosity:
+                print('{}: ...XRISK from subtly unaligned TAI :('.format(y))
+            state['category'] = 'xrisk_subtly_unaligned_tai'
+            state['tai_type'] = 'agent'
+            state['terminate'] = True
+            state['final_year'] = y
+            state['tai'] = True
+            state['tai_year'] = y
 
     elif state['tai_alignment_state'] == 'blatantly_misaligned':
         state = attempt_to_avert_misaligned_tai(state, variables, y, verbosity, intentional_misuse=False)
@@ -139,32 +149,64 @@ def deploy_tai(y, state, variables, verbosity):
 # TODO: May not deploy TAI as soon as it is deployable
 # TODO: Do we want to re-roll the possibility of making agentic TAI in future years?
 # TODO: TAI or nearness to TAI creates great power war
+# TODO: Catastrophes from AI
 def tai_scenarios_module(y, state, variables, verbosity):
-    if state['tai'] and state['tai_type'] != 'abandoned' and state['tai_type'] != 'tool':
-        if (p_event(variables, 'p_make_agent_tai', verbosity) or state['tai_type'] == 'agent') and state['tai_type'] != 'tool':
-            # TODO: declare state['tai_type'] = 'agent' to avoid re-rolling p_make_agent_tai every run, but also don't break the way 1st vs 2nd attempt is calculated
+    if state['tai_type'] != 'abandoned':
+        flop_ = np.log10(variables['effective_flop'])
 
-            if deliberate_misuse(state, variables, verbosity):
-                # TODO: Maybe deliberate misuse by the US would be ok-ish? Could depend on "who gets there first"
-                state = attempt_to_avert_misaligned_tai(state, variables, y, verbosity, intentional_misuse=True)
+        # TODO: Find some way to not hardcore these
+        # TODO: Incorporate delays
+        narrower_threat = variables['threat_model'][0][1]
+        pasta = variables['threat_model'][1][1]
+        
+        is_deliberate_misuse_ = deliberate_misuse(state, variables, verbosity)
 
+        if verbosity > 1:
+            print('{}: Effective FLOP of {} vs. narrower threat anchor of {} and PASTA anchor of {}'.format(y,
+                                                                                                            round(flop_, 1),
+                                                                                                            round(narrower_threat, 1),
+                                                                                                            round(pasta, 1)))
+
+        narrower_threat_via_misuse_met = flop_ >= narrower_threat and is_deliberate_misuse_ and variables['narrower_threat_is_xrisk_misuse']
+        narrower_threat_not_via_misuse_met = (flop_ >= narrower_threat and not is_deliberate_misuse_ and variables['narrower_threat_is_xrisk_no_misuse'])
+        pasta_met = flop_ >= pasta
+        if narrower_threat_via_misuse_met or narrower_threat_not_via_misuse_met or pasta_met:
+            if verbosity and not state['compute_needs_announced']:
+                if pasta_met:
+                    threat = 'PASTA'
+                    flop_needs = pasta
+                elif narrower_threat_via_misuse_met:
+                    threat = 'narrower threat via misuse'
+                    flop_needs = narrower_threat
+                elif narrower_threat_not_via_misuse_met:
+                    threat = 'narrower threat not via misuse'
+                    flop_needs = narrower_threat
+                print('{}: Compute needs for x-risk via {} met ({} vs. {})'.format(y, threat, round(flop_, 1), round(flop_needs, 1)))
+                state['compute_needs_announced'] = True
+
+            if not state['initial_delays_calculated']:
+                nonscaling_countdown = calculate_nonscaling_delay(y, variables['delay'], variables, verbosity > 0)['nonscaling_countdown']
+                state['total_delay'] += nonscaling_countdown
+                state['initial_delays_calculated'] = True
+
+            if state['total_delay'] > 0:
+                if verbosity > 1:
+                    print('-- Compute needs for AI met but {} year nonscaling delay remains'.format(int(round(state['total_delay']))))
+                state['total_delay'] -= 1
             else:
-                state = tai_alignment(y, state, variables, verbosity)
-
-                # TODO: may depend on subtle misalignment
-                if (('fully_aligned' in state['tai_alignment_state'] and p_event(variables, 'p_know_aligned_ai_is_aligned', verbosity)) or
-                    ('fully_aligned' not in state['tai_alignment_state'] and not p_event(variables, 'p_know_misaligned_ai_is_misaligned', verbosity))):
-                    state = deploy_tai(y, state, variables, verbosity)
+                if is_deliberate_misuse_:
+                    # TODO: Maybe deliberate misuse by the US would be ok-ish? Could depend on "who gets there first"
+                    state = attempt_to_avert_misaligned_tai(state, variables, y, verbosity, intentional_misuse=True)
                 else:
-                    if not coordinate_against_deployment(y, state, variables, verbosity):
+                    state = tai_alignment(y, state, variables, verbosity)
+                    # TODO: may depend on subtle misalignment
+                    if (('fully_aligned' in state['tai_alignment_state'] and p_event(variables, 'p_know_aligned_ai_is_aligned', verbosity)) or
+                        ('fully_aligned' not in state['tai_alignment_state'] and not p_event(variables, 'p_know_misaligned_ai_is_misaligned', verbosity))):
                         state = deploy_tai(y, state, variables, verbosity)
-                    elif verbosity:
-                        print('{}: ...coordinated to not deploy TAI'.format(y))
-
-        else: # tool TAI
-            if verbosity:
-                print('{}: ...Tool TAI made'.format(y))
-            state['tai_type'] = 'tool'
-            # TODO: Does tool AI help mitigate xrisk?
+                    else:
+                        if not coordinate_against_deployment(y, state, variables, verbosity):
+                            state = deploy_tai(y, state, variables, verbosity)
+                        elif verbosity:
+                            print('{}: ...coordinated to not deploy TAI'.format(y))
 
     return state

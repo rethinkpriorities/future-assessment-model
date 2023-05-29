@@ -76,6 +76,19 @@ def flop_at_max(initial_gdp, gdp_growth, initial_pay, spend_doubling_time, max_g
             flop_per_dollar(initial_flop_per_dollar, max_flop_per_dollar, flop_halving_rate, year))
 
 
+def effective_flop_at_max(initial_gdp, gdp_growth, initial_pay, spend_doubling_time, max_gdp_frac,
+                          initial_flop_per_dollar, initial_flop, possible_reduction, doubling_rate, year):
+    return (willingness_to_pay(initial_gdp=initial_gdp,
+                               gdp_growth=gdp_growth,
+                               initial_pay=initial_pay,
+                               spend_doubling_time=spend_doubling_time,
+                               max_gdp_frac=max_gdp_frac,
+                               year=year) *
+            initial_flop_per_dollar *
+            (flop_needed(initial_flop, possible_reduction, doubling_rate, CURRENT_YEAR) /
+             flop_needed(initial_flop, possible_reduction, doubling_rate, year)))
+
+
 def possible_algo_reduction_fn(min_reduction, max_reduction, tai_flop_size):
     if max_reduction < min_reduction:
         max_reduction = min_reduction
@@ -89,13 +102,19 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                         initial_flop_per_dollar_, flop_halving_rate_, max_flop_per_dollar_, initial_pay_,
                         gdp_growth_, max_gdp_frac_, willingness_ramp_, spend_doubling_time_, spend_doubling_time_2025_,
                         nonscaling_delay_, willingness_spend_horizon_, print_diagnostic, variables):
-    queue_tai_year = 99999
-    plt.ioff()
     if print_diagnostic:
         cost_of_tai_collector = []
         willingness_collector = []
+
+    queue_tai_year = 99999
+    effective_flop_collector = []
+    tai_created = False
+    is_nonscaling_issue = None
+    nonscaling_delay_out = 0
+    initial_cost_of_tai_ = None
+    plt.ioff()
     
-    if print_diagnostic:
+    if not tai_created and print_diagnostic:
         print('It takes {} log FLOP (~{}) for transformative capabilities.'.format(np.round(tai_flop_size_, 1),
                                                                                    numerize(10 ** tai_flop_size_)))
         print('Every {} years algorithms get 2x better, with {} log reductions possible.'.format(np.round(algo_doubling_rate_, 1),
@@ -141,162 +160,123 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
             print('We are willing to spend over {} years to make TAI'.format(willingness_spend_horizon_))
         print('---')
     
-    tai_created = False
-    is_nonscaling_issue = None
-    nonscaling_delay_out = 0
     for y in years:
-        if not tai_created:
-            flop_needed_ = flop_needed(initial_flop=10 ** tai_flop_size_,
-                                       doubling_rate=algo_doubling_rate_,
-                                       possible_reduction=10 ** possible_algo_reduction_,
-                                       year=(y - variables['CURRENT_YEAR']))
-            
-            flop_per_dollar_ = flop_per_dollar(initial_flop_per_dollar=initial_flop_per_dollar_,
-                                               max_flop_per_dollar=max_flop_per_dollar_,
-                                               halving_rate=flop_halving_rate_,
-                                               year=(y - variables['CURRENT_YEAR']))
-            
-            if flop_per_dollar_ > 10 ** 200 or flop_needed_ > 10 ** 200:
-                flop_needed_ = int(flop_needed_)
-                flop_per_dollar_ = int(flop_per_dollar_)
-                cost_of_tai_ = flop_needed_ // flop_per_dollar_
-            else:
-                cost_of_tai_ = flop_needed_ / flop_per_dollar_
-            
-            if variables['CURRENT_YEAR'] >= 2025:
-                raise ValueError('CURRENT_YEAR >= 2025 not currently supported')
+        flop_needed_ = flop_needed(initial_flop=10 ** tai_flop_size_,
+                                   doubling_rate=algo_doubling_rate_,
+                                   possible_reduction=10 ** possible_algo_reduction_,
+                                   year=(y - variables['CURRENT_YEAR']))
+        
+        flop_per_dollar_ = flop_per_dollar(initial_flop_per_dollar=initial_flop_per_dollar_,
+                                           max_flop_per_dollar=max_flop_per_dollar_,
+                                           halving_rate=flop_halving_rate_,
+                                           year=(y - variables['CURRENT_YEAR']))
+        
+        if flop_per_dollar_ > 10 ** 200 or flop_needed_ > 10 ** 200:
+            flop_needed_ = int(flop_needed_)
+            flop_per_dollar_ = int(flop_per_dollar_)
+            cost_of_tai_ = flop_needed_ // flop_per_dollar_
+        else:
+            cost_of_tai_ = flop_needed_ / flop_per_dollar_
+        
+        if variables['CURRENT_YEAR'] >= 2025:
+            raise ValueError('CURRENT_YEAR >= 2025 not currently supported')
 
 
-            if y <= 2025:
-                willingness_ = willingness_to_pay(initial_gdp=initial_gdp_,
-                                                  gdp_growth=gdp_growth_,
-                                                  initial_pay=initial_pay_,
-                                                  spend_doubling_time=spend_doubling_time_2025_,
-                                                  max_gdp_frac=max_gdp_frac_,
-                                                  year=y - variables['CURRENT_YEAR'])
-            else:
-                willingness_2025_ = willingness_to_pay(initial_gdp=initial_gdp_,
-                                                       gdp_growth=gdp_growth_,
-                                                       initial_pay=initial_pay_,
-                                                       spend_doubling_time=spend_doubling_time_2025_,
-                                                       max_gdp_frac=max_gdp_frac_,
-                                                       year=2025 - variables['CURRENT_YEAR'])
-                gdp_2025_ = 10 ** gdp(initial_gdp=np.log10(initial_gdp_), gdp_growth=gdp_growth_, year=2025 - variables['CURRENT_YEAR'])
-                willingness_ = willingness_to_pay(initial_gdp=gdp_2025_,
-                                                  gdp_growth=gdp_growth_,
-                                                  initial_pay=willingness_2025_,
-                                                  spend_doubling_time=spend_doubling_time_,
-                                                  max_gdp_frac=max_gdp_frac_,
-                                                  year=y - 2025)
+        if y <= 2025:
+            willingness_ = willingness_to_pay(initial_gdp=initial_gdp_,
+                                              gdp_growth=gdp_growth_,
+                                              initial_pay=initial_pay_,
+                                              spend_doubling_time=spend_doubling_time_2025_,
+                                              max_gdp_frac=max_gdp_frac_,
+                                              year=y - variables['CURRENT_YEAR'])
+        else:
+            willingness_2025_ = willingness_to_pay(initial_gdp=initial_gdp_,
+                                                   gdp_growth=gdp_growth_,
+                                                   initial_pay=initial_pay_,
+                                                   spend_doubling_time=spend_doubling_time_2025_,
+                                                   max_gdp_frac=max_gdp_frac_,
+                                                   year=2025 - variables['CURRENT_YEAR'])
+            gdp_2025_ = 10 ** gdp(initial_gdp=np.log10(initial_gdp_), gdp_growth=gdp_growth_, year=2025 - variables['CURRENT_YEAR'])
+            willingness_ = willingness_to_pay(initial_gdp=gdp_2025_,
+                                              gdp_growth=gdp_growth_,
+                                              initial_pay=willingness_2025_,
+                                              spend_doubling_time=spend_doubling_time_,
+                                              max_gdp_frac=max_gdp_frac_,
+                                              year=y - 2025)
+        
+        if not tai_created and print_diagnostic:
+            cost_of_tai_collector.append(cost_of_tai_)
+            willingness_collector.append(willingness_)
+        
+        if flop_per_dollar_ > 10 ** 200:
+            willingness_ = int(willingness_)
+        if willingness_ > 10 ** 200:
+            flop_per_dollar_ = int(flop_per_dollar_)
+        
+        total_compute_ = willingness_ * flop_per_dollar_
+
+        if initial_cost_of_tai_ is None:
+            initial_cost_of_tai_ = cost_of_tai_
+        effective_flop_ = willingness_ * initial_flop_per_dollar_ * (initial_cost_of_tai_ / cost_of_tai_)
+        effective_flop_collector.append(effective_flop_)
+        
+        if not tai_created and print_diagnostic:
+            out_str = ('Year: {} - {} max log FLOP ({}) available - TAI takes {} log FLOP ({}) - ' +
+                       'log $ {} to buy TAI ({}) vs. willingness to pay log $ {} ({}) - {} log FLOP per $ ({}) (Effective 2023-logFLOP: {})')
+            print(out_str.format(y,
+                                 np.round(math.log10(total_compute_), 1),
+                                 numerize(total_compute_),
+                                 np.round(math.log10(flop_needed_), 1),
+                                 numerize(flop_needed_),
+                                 np.round(math.log10(cost_of_tai_), 1),
+                                 numerize(cost_of_tai_),
+                                 np.round(math.log10(willingness_), 1),
+                                 numerize(willingness_),
+                                 np.round(math.log10(flop_per_dollar_), 1),
+                                 numerize(flop_per_dollar_),
+                                 np.round(math.log10(effective_flop_), 1)))
+        
+        if cost_of_tai_ > 10 ** 200:
+            spend_tai_years = int(cost_of_tai_) // int(willingness_)
+        else:
+            spend_tai_years = cost_of_tai_ / willingness_
             
-            if print_diagnostic:
-                cost_of_tai_collector.append(cost_of_tai_)
-                willingness_collector.append(willingness_)
-            
-            if flop_per_dollar_ > 10 ** 200:
-                willingness_ = int(willingness_)
-            if willingness_ > 10 ** 200:
-                flop_per_dollar_ = int(flop_per_dollar_)
-            
-            total_compute_ = willingness_ * flop_per_dollar_
-            
-            if print_diagnostic:
-                out_str = ('Year: {} - {} max log FLOP ({}) available - TAI takes {} log FLOP ({}) - ' +
-                           'log $ {} to buy TAI ({}) vs. willingness to pay log $ {} ({}) - {} log FLOP per $ ({})')
-                print(out_str.format(y,
-                                     np.round(math.log10(total_compute_), 1),
-                                     numerize(total_compute_),
-                                     np.round(math.log10(flop_needed_), 1),
-                                     numerize(flop_needed_),
-                                     np.round(math.log10(cost_of_tai_), 1),
-                                     numerize(cost_of_tai_),
-                                     np.round(math.log10(willingness_), 1),
-                                     numerize(willingness_),
-                                     np.round(math.log10(flop_per_dollar_), 1),
-                                     numerize(flop_per_dollar_)))
-            
-            if cost_of_tai_ > 10 ** 200:
-                spend_tai_years = int(cost_of_tai_) // int(willingness_)
-            else:
-                spend_tai_years = cost_of_tai_ / willingness_
+        if not tai_created and not is_nonscaling_issue and queue_tai_year < 99999 and print_diagnostic:
+            print('-$- {}/{}'.format(y, queue_tai_year))
+        if (not tai_created and
+            ((cost_of_tai_ * willingness_ramp_) <= willingness_ or y >= queue_tai_year)):
+            if is_nonscaling_issue is None:
+                delay_data = calculate_nonscaling_delay(y, nonscaling_delay_, variables, print_diagnostic)
+                is_nonscaling_issue = delay_data['is_nonscaling_issue']
+                nonscaling_delay_out = delay_data['nonscaling_delay_out']
+                nonscaling_countdown = delay_data['nonscaling_countdown']
                 
-            if not is_nonscaling_issue and queue_tai_year < 99999 and print_diagnostic:
-                print('-$- {}/{}'.format(y, queue_tai_year))
-            if (cost_of_tai_ * willingness_ramp_) <= willingness_ or y >= queue_tai_year:
-                if is_nonscaling_issue is None:
-                    if nonscaling_delay_ is not None:
-                        if isinstance(nonscaling_delay_, dict):
-                            if len(nonscaling_delay_) == 1:
-                                nonscaling_delay_ = list(nonscaling_delay_.items())[0][1]
-                                p_nonscaling_delay_ = nonscaling_delay_['prob']
-                                # TODO: executing an arbitrary function from cache is not good
-                                if callable(p_nonscaling_delay_):
-                                    p_nonscaling_delay_ = np.array([p_nonscaling_delay_(y) for y in years])
-                                else:
-                                    p_nonscaling_delay_ = np.array([p_nonscaling_delay_ for y in years])
-                                p_nonscaling_delay_ = p_nonscaling_delay_[y - variables['CURRENT_YEAR']]
-                                is_nonscaling_issue = sq.event(p_nonscaling_delay_)
-                                nonscaling_delay_ = nonscaling_delay_['length']
-                                nonscaling_countdown = nonscaling_delay_
-                                if print_diagnostic:
-                                    print('-- {} p_nonscaling_issue={}'.format('Nonscaling delay occured' if is_nonscaling_issue else 'Nonscaling issue did not occur',
-                                                                               np.round(p_nonscaling_delay_, 4)))
-                            else:
-                                nonscaling_delay__ = nonscaling_delay_
-                                for name, delay in nonscaling_delay__.items():
-                                    p_nonscaling_delay_ = delay['prob']
-                                    p_nonscaling_delay_ = np.array([p_nonscaling_delay_(y) for y in years])
-                                    # TODO: executing an arbitrary function from cache is not good
-                                    p_nonscaling_delay_ = p_nonscaling_delay_[y - variables['CURRENT_YEAR']]
-                                    this_nonscaling_issue = sq.event(p_nonscaling_delay_)
-                                    if print_diagnostic:
-                                        print('-- {} p_nonscaling_issue p={} -> {}'.format(name,
-                                                                                           np.round(p_nonscaling_delay_, 4),
-                                                                                           'Nonscaling delay occured' if this_nonscaling_issue else 'Nonscaling issue did not occur',))
-                                    if this_nonscaling_issue:
-                                        if not is_nonscaling_issue:
-                                            is_nonscaling_issue = True
-                                            nonscaling_delay_ = sq.sample(delay['length'])
-                                            if print_diagnostic:
-                                                print('-- -- this delay is {} years (total delay {} years)'.format(int(np.ceil(nonscaling_delay_)),
-                                                                                                                   int(np.ceil(nonscaling_delay_))))
-                                            nonscaling_delay_out = nonscaling_delay_
-                                            nonscaling_countdown = nonscaling_delay_
-                                        else:
-                                            this_nonscaling_delay = sq.sample(delay['length'])
-                                            nonscaling_delay_out = nonscaling_delay_
-                                            max_delay = np.max([nonscaling_delay_, this_nonscaling_delay])
-                                            nonscaling_delay_ = int(np.ceil(max_delay + this_nonscaling_delay / 4))
-                                            if print_diagnostic:
-                                                print('-- -- this delay is {} years (total delay {} years)'.format(int(np.ceil(this_nonscaling_delay)),
-                                                                                                                   int(np.ceil(nonscaling_delay_))))
-                                            nonscaling_delay_out = nonscaling_delay_
-                                            nonscaling_countdown = nonscaling_delay_
-                        else:
-                            raise ValueError('nonscaling delay information must be passed as a dictionary')
-
-                    
-                if not is_nonscaling_issue or nonscaling_countdown <= 0.1:
-                    if print_diagnostic:
-                        print('--- /!\ TAI CREATED in {}'.format(y))
-                        plot_tai(plt, years, cost_of_tai_collector, willingness_collector).show()
-                    return {'tai_year': int(y), 'delay': int(nonscaling_delay_out)}
-                else:
-                    if print_diagnostic:
-                        print('/!\ FLOP for TAI sufficient but needs {} more years to solve non-scaling issues'.format(int(np.ceil(nonscaling_countdown))))
-                    nonscaling_countdown -= 1
-            elif (not is_nonscaling_issue and willingness_spend_horizon_ > 1 and
-                  spend_tai_years <= willingness_spend_horizon_ and y + math.ceil(spend_tai_years) < queue_tai_year):
-                queue_tai_year = y + math.ceil(spend_tai_years)
+            if not is_nonscaling_issue or nonscaling_countdown <= 0.1:
                 if print_diagnostic:
-                    print('-$- We have enough spend to make TAI in {} years (in {}) if sustained.'.format(math.ceil(spend_tai_years),
+                    print('--- /!\ TAI CREATED in {}'.format(y))
+                    plot_tai(plt, years, cost_of_tai_collector, willingness_collector).show()
+                tai_created = True
+                tai_year = y
+            else:
+                if print_diagnostic:
+                    print('/!\ FLOP for TAI sufficient but needs {} more years to solve non-scaling issues'.format(int(np.ceil(nonscaling_countdown))))
+                nonscaling_countdown -= 1
+        elif (not is_nonscaling_issue and willingness_spend_horizon_ > 1 and
+              spend_tai_years <= willingness_spend_horizon_ and y + math.ceil(spend_tai_years) < queue_tai_year):
+            queue_tai_year = y + math.ceil(spend_tai_years)
+            if print_diagnostic:
+                print('-$- We have enough spend to make TAI in {} years (in {}) if sustained.'.format(math.ceil(spend_tai_years),
                                                                                                           queue_tai_year))
                 
     if not tai_created:
+        tai_year = variables['MAX_YEAR'] + 1
         if print_diagnostic:
             print('--- :/ TAI NOT CREATED BEFORE {}'.format(variables['MAX_YEAR'] + 1))
             plot_tai(plt, years, cost_of_tai_collector, willingness_collector).show()
-        return {'tai_year': int(variables['MAX_YEAR'] + 1), 'delay': int(nonscaling_delay_out)}
+
+    return {'tai_year': int(tai_year),
+            'delay': int(nonscaling_delay_out),
+            'effective_flop': effective_flop_collector}
 
 
 def print_graph(samples, label, reverse=False, digits=1):
@@ -593,6 +573,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                             np.round(np.log10(gdp_90[y - variables['CURRENT_YEAR']]), 1),
                             numerize(gdp_90[y - variables['CURRENT_YEAR']])))
 
+
     print('-')
     print('-')
     print('## Willingness to Pay Over Time ##')
@@ -634,7 +615,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
 
     print('-')
     print('-')
-    print('## FLOP Needed to Make TAI (Given Algorithmic Progress) ##')
+    print('## Actual FLOP Needed to Make TAI (Given Algorithmic Progress) ##')
     flops_50 = np.array([flop_needed(initial_flop=10 ** initial_flop_p[50],
                                      doubling_rate=algo_halving_fn(algo_doubling_rate_min_p[50],
                                                                    algo_doubling_rate_max_p[50],
@@ -663,7 +644,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     plt.plot(years, np.log10(flops_10), linestyle='dashed', color='black')
     plt.plot(years, np.log10(flops_90), linestyle='dashed', color='black')
     plt.plot(years, np.log10(flops_50), color='black')
-    plt.ylabel('log FLOP needed to make TAI')
+    plt.ylabel('log actual FLOP needed to make TAI')
     plt.show()
 
     for y in years[:10] + years[10::10]:
@@ -676,9 +657,10 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                             np.round(np.log10(flops_90[y - variables['CURRENT_YEAR']]), 1),
                             numerize(flops_90[y - variables['CURRENT_YEAR']])))
 
+
     print('-')
     print('-')
-    print('## FLOP per Dollar (Given Declining Costs) ##')
+    print('## Actual FLOP per Dollar (Given Declining Costs) ##')
     flop_per_dollar_50 = np.array([flop_per_dollar(initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[50],
                                                    max_flop_per_dollar=10 ** max_flop_per_dollar_p[50],
                                                    halving_rate=flop_halving_rate_p[50],
@@ -707,38 +689,67 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                             np.round(np.log10(flop_per_dollar_90[y - variables['CURRENT_YEAR']]), 1),
                             numerize(flop_per_dollar_90[y - variables['CURRENT_YEAR']])))
 
+
     print('-')
     print('-')
     print('## Max Possible OOM Reduction in TAI FLOP Size ##')
     tai_sizes = range(20, 50)
-    flop_per_dollar_ = np.array([possible_algo_reduction_fn(min_reduction_p[50],
-                                                             max_reduction_p[50], t) for t in tai_sizes])
-    plt.plot(tai_sizes, flop_per_dollar_)
+    algo_reduction_50 = np.array([possible_algo_reduction_fn(min_reduction_p[50],
+                                                              max_reduction_p[50], t) for t in tai_sizes])
+    algo_reduction_10 = np.array([possible_algo_reduction_fn(min_reduction_p[10],
+                                                              max_reduction_p[90], t) for t in tai_sizes])
+    algo_reduction_90 = np.array([possible_algo_reduction_fn(min_reduction_p[90],
+                                                              max_reduction_p[10], t) for t in tai_sizes])
+    plt.plot(tai_sizes, algo_reduction_50, color='black')
+    plt.plot(tai_sizes, algo_reduction_10, linestyle='dashed', color='black')
+    plt.plot(tai_sizes, algo_reduction_90, linestyle='dashed', color='black')
     plt.ylabel('max OOM reduction')
     plt.xlabel('initial FLOP needed for TAI prior to any reduction')
     plt.show()
 
     for t in tai_sizes:
-        print('TAI log FLOP {} -> {} OOM reductions possible'.format(t,
-                                                                     round(possible_algo_reduction_fn(min_reduction_p[50],
-                                                                                                      max_reduction_p[50],
-                                                                                                      t), 2)))
+        print('TAI log FLOP {} -> {} OOM reductions possible (90% CI: {} to {})'.format(t,
+                                                                                        round(possible_algo_reduction_fn(min_reduction_p[50],
+                                                                                                                         max_reduction_p[50],
+                                                                                                                         t), 2),
+                                                                                        round(possible_algo_reduction_fn(min_reduction_p[10],
+                                                                                                                         max_reduction_p[90],
+                                                                                                                         t), 2),
+                                                                                        round(possible_algo_reduction_fn(min_reduction_p[90],
+                                                                                                                         max_reduction_p[10],
+                                                                                                                         t), 2)))
+
 
     print('-')
     print('-')
     print('## Halving time (years) of compute requirements ##')
-    flop_per_dollar_ = np.array([algo_halving_fn(algo_doubling_rate_min_p[50],
-                                                 algo_doubling_rate_max_p[50],
-                                                 t) for t in tai_sizes])
-    plt.plot(tai_sizes, flop_per_dollar_)
+    halving_time_50 = np.array([algo_halving_fn(algo_doubling_rate_min_p[50],
+                                                algo_doubling_rate_max_p[50],
+                                                t) for t in tai_sizes])
+    halving_time_90 = np.array([algo_halving_fn(algo_doubling_rate_min_p[90],
+                                                algo_doubling_rate_max_p[90],
+                                                t) for t in tai_sizes])
+    halving_time_10 = np.array([algo_halving_fn(algo_doubling_rate_min_p[10],
+                                                algo_doubling_rate_max_p[10],
+                                                t) for t in tai_sizes])
+    plt.plot(tai_sizes, halving_time_50, color='black')
+    plt.plot(tai_sizes, halving_time_90, linestyle='dashed', color='black')
+    plt.plot(tai_sizes, halving_time_10, linestyle='dashed', color='black')
     plt.ylabel('number of years for compute requirements to halve')
     plt.show()
 
     for t in tai_sizes:
-        print('TAI log FLOP {} -> algo doubling rate {}yrs'.format(t,
-                                                                   round(algo_halving_fn(algo_doubling_rate_min_p[50],
-                                                                                         algo_doubling_rate_max_p[50],
-                                                                                         t), 2)))
+        print('TAI log FLOP {} -> algo doubling rate {}yrs (90% CI: {} to {})'.format(t,
+                                                                                      round(algo_halving_fn(algo_doubling_rate_min_p[50],
+                                                                                            algo_doubling_rate_max_p[50],
+                                                                                            t), 2),
+                                                                                      round(algo_halving_fn(algo_doubling_rate_min_p[10],
+                                                                                            algo_doubling_rate_max_p[90],
+                                                                                            t), 2),
+                                                                                      round(algo_halving_fn(algo_doubling_rate_min_p[90],
+                                                                                            algo_doubling_rate_max_p[10],
+                                                                                            t), 2)))
+
 
     if variables.get('initial_chance_of_nonscaling_issue', 0) != 0:
         p_delay_ = np.array([p_nonscaling_delay(y) for y in years])
@@ -749,6 +760,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
         for y in years[:10] + years[10::10]:
             outstr = 'Year: {} - chance of a nonscaling delay if TAI compute needs are otherwise met in this year: {}%'
             print(outstr.format(y, int(round(p_delay_[y - variables['CURRENT_YEAR']] * 100))))
+
 
     print('-')
     print('-')
@@ -797,9 +809,10 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                             np.round(np.log10(cost_of_tai_90[y - variables['CURRENT_YEAR']]), 1),
                             numerize(cost_of_tai_90[y - variables['CURRENT_YEAR']])))
 
+
     print('-')
     print('-')
-    print('## FLOP at Max Spend ##')
+    print('## Actual FLOP at Max Spend ##')
     flop_at_max_50 = np.array([flop_at_max(initial_gdp=variables['initial_gdp'],
                                            gdp_growth=gdp_growth_p[50],
                                            initial_pay=10 ** initial_pay_p[50],
@@ -844,6 +857,70 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                             np.round(np.log10(flop_at_max_90[y - variables['CURRENT_YEAR']]), 1),
                             numerize(flop_at_max_90[y - variables['CURRENT_YEAR']])))
 
+
+    print('-')
+    print('-')
+    print('## Effective 2023-FLOP at Max Spend (given algorithmic progress and decline in $/FLOP) ##')
+    effective_flop_at_max_50 = np.array([effective_flop_at_max(initial_gdp=variables['initial_gdp'],
+                                                               gdp_growth=gdp_growth_p[50],
+                                                               initial_pay=10 ** initial_pay_p[50],
+                                                               spend_doubling_time=spend_doubling_time_p[50],
+                                                               max_gdp_frac=max_gdp_frac_p[50],
+                                                               initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[50],
+                                                               initial_flop=10 ** initial_flop_p[50],
+                                                               possible_reduction=10 ** possible_algo_reduction_fn(min_reduction_p[50],
+                                                                                                                   max_reduction_p[50],
+                                                                                                                   initial_flop_p[50]),
+                                                               doubling_rate=algo_halving_fn(algo_doubling_rate_min_p[50],
+                                                                                             algo_doubling_rate_max_p[50],
+                                                                                             initial_flop_p[50]),
+                                                               year=(y - variables['CURRENT_YEAR'])) for y in years])
+    effective_flop_at_max_10 = np.array([effective_flop_at_max(initial_gdp=variables['initial_gdp'],
+                                                               gdp_growth=gdp_growth_p[10],
+                                                               initial_pay=10 ** initial_pay_p[10],
+                                                               spend_doubling_time=spend_doubling_time_p[10],
+                                                               max_gdp_frac=max_gdp_frac_p[10],
+                                                               initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[10],
+                                                               initial_flop=10 ** initial_flop_p[10],
+                                                               possible_reduction=10 ** possible_algo_reduction_fn(min_reduction_p[90],
+                                                                                                                   max_reduction_p[10],
+                                                                                                                   initial_flop_p[10]),
+                                                               doubling_rate=algo_halving_fn(algo_doubling_rate_min_p[90],
+                                                                                             algo_doubling_rate_max_p[10],
+                                                                                             initial_flop_p[10]),
+                                                               year=(y - variables['CURRENT_YEAR'])) for y in years])
+    effective_flop_at_max_90 = np.array([effective_flop_at_max(initial_gdp=variables['initial_gdp'],
+                                                               gdp_growth=gdp_growth_p[90],
+                                                               initial_pay=10 ** initial_pay_p[90],
+                                                               spend_doubling_time=spend_doubling_time_p[90],
+                                                               max_gdp_frac=max_gdp_frac_p[90],
+                                                               initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[90],
+                                                               initial_flop=10 ** initial_flop_p[90],
+                                                               possible_reduction=10 ** possible_algo_reduction_fn(min_reduction_p[10],
+                                                                                                                   max_reduction_p[90],
+                                                                                                                   initial_flop_p[90]),
+                                                               doubling_rate=algo_halving_fn(algo_doubling_rate_min_p[10],
+                                                                                             algo_doubling_rate_max_p[90],
+                                                                                             initial_flop_p[90]),
+                                                               year=(y - variables['CURRENT_YEAR'])) for y in years])
+
+    plt.plot(years, np.log10(effective_flop_at_max_50), color='black')
+    plt.plot(years, np.log10(effective_flop_at_max_90), linestyle='dashed', color='black')
+    plt.plot(years, np.log10(effective_flop_at_max_10), linestyle='dashed', color='black')
+    plt.ylabel('max log effective 2023-FLOP bought')
+    plt.show()
+
+    for y in years[:10] + years[10::10]:
+        outstr = 'Year: {} - max log FLOP {} (~{}) 90% CI {} (~{}) - {} (~{})'
+        print(outstr.format(y,
+                            np.round(np.log10(effective_flop_at_max_50[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(effective_flop_at_max_50[y - variables['CURRENT_YEAR']]),
+                            np.round(np.log10(effective_flop_at_max_10[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(effective_flop_at_max_10[y - variables['CURRENT_YEAR']]),
+                            np.round(np.log10(effective_flop_at_max_90[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(effective_flop_at_max_90[y - variables['CURRENT_YEAR']])))
+
+
     nonscaling_delay_ = variables.get('nonscaling_delay')
     if nonscaling_delay_ is not None:
         print('-')
@@ -861,6 +938,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                    ' to issues unrelated to scaling FLOP').format(delay['length']))
             pprint(sq.get_percentiles(sq.sample(delay['length'], n=1000)))
             plot_nonscaling_delay(plt, years, delay['prob'])
+
 
     print('-')
     print('-')

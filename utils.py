@@ -221,3 +221,74 @@ def _mark_time(start, expected_sec=None, label=None,
             print('!!! WARNING: Unexpected timing deviation')
 
     return {'timing(sec)': delta_sec, 'deviation': deviation}
+
+
+def calculate_nonscaling_delay(y, nonscaling_delay_, variables, print_diagnostic):
+    is_nonscaling_issue = False
+    nonscaling_delay_out = 0
+    nonscaling_countdown = 0
+    if nonscaling_delay_ is not None:
+        if isinstance(nonscaling_delay_, dict):
+            if len(nonscaling_delay_) == 1:
+                nonscaling_delay_ = list(nonscaling_delay_.items())[0][1]
+                p_nonscaling_delay_ = nonscaling_delay_['prob']
+                # TODO: executing an arbitrary function from cache is not good
+                if callable(p_nonscaling_delay_):
+                    p_nonscaling_delay_ = np.array([p_nonscaling_delay_(y) for y in years])
+                else:
+                    p_nonscaling_delay_ = np.array([p_nonscaling_delay_ for y in years])
+                p_nonscaling_delay_ = p_nonscaling_delay_[y - variables['CURRENT_YEAR']]
+                is_nonscaling_issue = sq.event(p_nonscaling_delay_)
+                nonscaling_delay_ = nonscaling_delay_['length']
+                nonscaling_countdown = nonscaling_delay_
+                if print_diagnostic:
+                    print('-- {} p_nonscaling_issue={}'.format('Nonscaling delay occured' if is_nonscaling_issue else 'Nonscaling issue did not occur',
+                                                               np.round(p_nonscaling_delay_, 4)))
+            else:
+                nonscaling_delay__ = nonscaling_delay_
+                for name, delay in nonscaling_delay__.items():
+                    p_nonscaling_delay_ = delay['prob']
+                    p_nonscaling_delay_ = np.array([p_nonscaling_delay_(y) for y in years])
+                    # TODO: executing an arbitrary function from cache is not good
+                    p_nonscaling_delay_ = p_nonscaling_delay_[y - variables['CURRENT_YEAR']]
+                    this_nonscaling_issue = sq.event(p_nonscaling_delay_)
+                    if print_diagnostic:
+                        print('-- {} p_nonscaling_issue p={} -> {}'.format(name,
+                                                                           np.round(p_nonscaling_delay_, 4),
+                                                                           'Nonscaling delay occured' if this_nonscaling_issue else 'Nonscaling issue did not occur',))
+                    if this_nonscaling_issue:
+                        if not is_nonscaling_issue:
+                            is_nonscaling_issue = True
+                            nonscaling_delay_ = sq.sample(delay['length'])
+                            if print_diagnostic:
+                                print('-- -- this delay is {} years (total delay {} years)'.format(int(np.ceil(nonscaling_delay_)),
+                                                                                                   int(np.ceil(nonscaling_delay_))))
+                            nonscaling_delay_out = nonscaling_delay_
+                            nonscaling_countdown = nonscaling_delay_
+                        else:
+                            this_nonscaling_delay = sq.sample(delay['length'])
+                            nonscaling_delay_out = nonscaling_delay_
+                            max_delay = np.max([nonscaling_delay_, this_nonscaling_delay])
+                            nonscaling_delay_ = int(np.ceil(max_delay + this_nonscaling_delay / 4))
+                            if print_diagnostic:
+                                print('-- -- this delay is {} years (total delay {} years)'.format(int(np.ceil(this_nonscaling_delay)),
+                                                                                                   int(np.ceil(nonscaling_delay_))))
+                            nonscaling_delay_out = nonscaling_delay_
+                            nonscaling_countdown = nonscaling_delay_
+        else:
+            raise ValueError('nonscaling delay information must be passed as a dictionary')
+
+        return {'is_nonscaling_issue': is_nonscaling_issue,
+                'nonscaling_delay_out': nonscaling_delay_out,
+                'nonscaling_countdown': nonscaling_countdown}
+
+
+def p_event(variables, label, verbosity):
+    if isinstance(variables, dict):
+        p = variables[label]
+    else:
+        p = variables
+    outcome = sq.event(p)
+    if verbosity > 1:
+        print('-- sampling {} p={} outcome={}'.format(label, p, outcome))
+    return outcome
