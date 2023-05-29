@@ -5,6 +5,7 @@ from copy import deepcopy
 
 
 STATES = ['boring', 'xrisk_tai_misuse', 'xrisk_tai_misuse_extinction', 'aligned_tai',
+          'aligned_tai_ends_time_of_perils', 'aligned_tai_does_not_end_time_of_perils',
           'xrisk_full_unaligned_tai_extinction', 'xrisk_full_unaligned_tai_singleton',
           'xrisk_subtly_unaligned_tai', 'xrisk_unknown_unknown', 'xrisk_nanotech',
           'xrisk_nukes_war', 'xrisk_nukes_accident', 'xrisk_bio_accident', 'xrisk_bio_war',
@@ -32,7 +33,8 @@ def define_event(variables, verbosity=0):
              'state_bioweapon': False, 'nonstate_bioweapon': False, 'averted_misalignment': False,
              'nuclear_weapon_used': False, 'catastrophe': [], 'recent_catastrophe_year': None,
              'terminate': False, 'final_year': None, 'double_catastrophe_xrisk': None,
-             'initial_delays_calculated': False, 'total_delay': 0, 'compute_needs_announced': False}
+             'initial_delays_calculated': False, 'total_delay': 0, 'compute_needs_announced': False,
+             'time_of_perils_end_calculated': False}
     allowed_state_keys = list(state.keys())
     collectors = {}
     tai_year_data = random.choice(vars_['tai_years'])
@@ -92,6 +94,9 @@ def define_event(variables, verbosity=0):
                     print('...US-China war delays TAI by {} years (total delay {} years)'.format(delay, state['total_delay']))
         # TODO: War -> TAI spending increase
 
+        # Check for time of perils
+        state = check_for_time_of_perils(y, state, vars_, verbosity)
+
         # Enforce validity of state
         for k in list(state.keys()):
             if k not in allowed_state_keys:
@@ -108,7 +113,10 @@ def define_event(variables, verbosity=0):
     # Boring future if MAX_YEAR is reached with no termination
     if not state['terminate']:
         if verbosity > 0:
-            print('...Boring future')
+            if state['category'] == 'aligned_tai_does_not_end_time_of_perils':
+                print('...We survive to >{} with aligned TAI but still some perils'.format(y))
+            else:
+                print('...We survive to >{} with a boring future (no TAI)'.format(y))
         state['final_year'] = '>{}'.format(y)
 
     if verbosity > 0:
