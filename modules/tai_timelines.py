@@ -77,7 +77,8 @@ def flop_at_max(initial_gdp, gdp_growth, initial_pay, spend_doubling_time, max_g
 
 
 def effective_flop_at_max(initial_gdp, gdp_growth, initial_pay, spend_doubling_time, max_gdp_frac,
-                          initial_flop_per_dollar, initial_flop, possible_reduction, doubling_rate, year):
+                          initial_flop_per_dollar, max_flop_per_dollar, flop_halving_rate,
+                          initial_flop, possible_reduction, doubling_rate, year):
     return (willingness_to_pay(initial_gdp=initial_gdp,
                                gdp_growth=gdp_growth,
                                initial_pay=initial_pay,
@@ -85,6 +86,8 @@ def effective_flop_at_max(initial_gdp, gdp_growth, initial_pay, spend_doubling_t
                                max_gdp_frac=max_gdp_frac,
                                year=year) *
             initial_flop_per_dollar *
+            (flop_per_dollar(initial_flop_per_dollar, max_flop_per_dollar, flop_halving_rate, year) /
+            flop_per_dollar(initial_flop_per_dollar, max_flop_per_dollar, flop_halving_rate, CURRENT_YEAR)) *
             (flop_needed(initial_flop, possible_reduction, doubling_rate, CURRENT_YEAR) /
              flop_needed(initial_flop, possible_reduction, doubling_rate, year)))
 
@@ -182,7 +185,7 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
             raise ValueError('CURRENT_YEAR >= 2025 not currently supported')
 
 
-        if y <= 2025:
+        if y <= 2025 or spend_doubling_time_2025_ == spend_doubling_time_:
             willingness_ = willingness_to_pay(initial_gdp=initial_gdp_,
                                               gdp_growth=gdp_growth_,
                                               initial_pay=initial_pay_,
@@ -284,6 +287,7 @@ def print_graph(samples, label, reverse=False, digits=1):
     if len(set(samples)) > 1:
         print('## {} ##'.format(label))
         pprint(pctiles)
+        print('(Mean: {})'.format(round(np.mean(samples), 1)))
         plt.hist(samples, bins = 200)
         plt.show()
         print('-')
@@ -298,11 +302,13 @@ def print_tai_arrival_stats(tai_years, variables):
     print('## DISTRIBUTION OF TAI ARRIVAL DATE ##')
     pctiles = sq.get_percentiles(tai_years, percentiles=[5, 10, 15, 20, 25, 35, 50, 60, 75, 80, 90, 95])
     pprint([str(o[0]) + '%: ' + (str(int(o[1])) if o[1] < variables['MAX_YEAR'] else '>' + str(variables['MAX_YEAR'])) for o in pctiles.items()])
+    print('(Mean: {})'.format(int(round(np.mean(tai_years)))))
     print('-')
     print('-')
 
     print('## DISTRIBUTION OF RELATIVE TAI ARRIVAL DATE ##')
     pprint([str(o[0]) + '%: ' + (str(int(o[1]) - variables['CURRENT_YEAR']) if o[1] < variables['MAX_YEAR'] else '>' + str(variables['MAX_YEAR'] - variables['CURRENT_YEAR'])) + ' years from now' for o in pctiles.items()])
+    print('(Mean: {} years from now)'.format(int(round(np.mean([t - variables['CURRENT_YEAR'] for t in tai_years])))))
     print('-')
     print('-')
 
@@ -868,6 +874,8 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                                                max_gdp_frac=max_gdp_frac_p[50],
                                                                initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[50],
                                                                initial_flop=10 ** initial_flop_p[50],
+                                                               max_flop_per_dollar=10 ** max_flop_per_dollar_p[50],
+                                                               flop_halving_rate=flop_halving_rate_p[50],
                                                                possible_reduction=10 ** possible_algo_reduction_fn(min_reduction_p[50],
                                                                                                                    max_reduction_p[50],
                                                                                                                    initial_flop_p[50]),
@@ -882,6 +890,8 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                                                max_gdp_frac=max_gdp_frac_p[10],
                                                                initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[10],
                                                                initial_flop=10 ** initial_flop_p[10],
+                                                               max_flop_per_dollar=10 ** max_flop_per_dollar_p[10],
+                                                               flop_halving_rate=flop_halving_rate_p[10],
                                                                possible_reduction=10 ** possible_algo_reduction_fn(min_reduction_p[90],
                                                                                                                    max_reduction_p[10],
                                                                                                                    initial_flop_p[10]),
@@ -896,6 +906,8 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                                                max_gdp_frac=max_gdp_frac_p[90],
                                                                initial_flop_per_dollar=10 ** initial_flop_per_dollar_p[90],
                                                                initial_flop=10 ** initial_flop_p[90],
+                                                               max_flop_per_dollar=10 ** max_flop_per_dollar_p[90],
+                                                               flop_halving_rate=flop_halving_rate_p[90],
                                                                possible_reduction=10 ** possible_algo_reduction_fn(min_reduction_p[10],
                                                                                                                    max_reduction_p[90],
                                                                                                                    initial_flop_p[90]),
