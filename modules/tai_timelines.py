@@ -399,7 +399,7 @@ def print_tai_arrival_stats(tai_years, variables):
     plt.show()
 
 
-def define_tai_timeline_event(verbose=False):
+def define_tai_timeline_event(variables, verbose=False):
     tai_flop_size_ = variables['tai_flop_size']
     if sq.is_sampleable(tai_flop_size_):
         tai_flop_size_ = sq.sample(tai_flop_size_)
@@ -462,23 +462,22 @@ def define_tai_timeline_event(verbose=False):
 
 
 def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
-                        dump_cache_file=None, reload_cache=False):
+                        dump_cache_file=None):
     for i in range(3):
         print('-')
         print('-')
         print('## SAMPLE RUN {} ##'.format(i + 1))
-        define_tai_timeline_event(verbose=True)
+        define_tai_timeline_event(variables, verbose=True)
 
     print('-')
     print('-')
     print('## RUN TIMELINES MODEL ##')
-    tai_years = bayes.bayesnet(define_tai_timeline_event,
+    tai_years = bayes.bayesnet(lambda: define_tai_timeline_event(variables),
                                verbose=True,
                                raw=True,
                                cores=cores,
                                load_cache_file=load_cache_file,
                                dump_cache_file=dump_cache_file,
-                               reload_cache=reload_cache,
                                n=runs)
 
     print('-')
