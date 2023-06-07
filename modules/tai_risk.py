@@ -145,7 +145,7 @@ def deploy_tai(y, state, variables, verbosity):
 # TODO: TAI or nearness to TAI creates great power war
 # TODO: Catastrophes from AI
 def tai_scenarios_module(y, state, variables, verbosity):
-    if state['tai_type'] != 'abandoned' and not state['tai_type'] != 'aligned_agent':
+    if state['tai_type'] != 'abandoned' and state['tai_type'] != 'aligned_agent':
         flop_ = np.log10(variables['effective_flop'])
 
         # TODO: Find some way to not hardcore these
