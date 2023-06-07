@@ -109,7 +109,10 @@ def derive_nonscaling_delay_curve(nonscaling_points, verbose=True):
 
 def plot_nonscaling_delay(plt, years, p_nonscaling_delay):
     print('## Chance of nonscaling delay ##')
-    p_delay_ = np.array([p_nonscaling_delay(y) for y in years])
+    if callable(p_nonscaling_delay):
+        p_delay_ = np.array([p_nonscaling_delay(y) for y in years])
+    else:
+        p_delay_ = np.array([p_nonscaling_delay for y in years])
     plt.plot(years, p_delay_, color='black')
     plt.ylabel('chance of a non-scaling delay')
     plt.show()
@@ -248,7 +251,10 @@ def calculate_nonscaling_delay(y, nonscaling_delay_, variables, print_diagnostic
                 nonscaling_delay__ = nonscaling_delay_
                 for name, delay in nonscaling_delay__.items():
                     p_nonscaling_delay_ = delay['prob']
-                    p_nonscaling_delay_ = np.array([p_nonscaling_delay_(y) for y in years])
+                    if callable(p_nonscaling_delay_):
+                        p_nonscaling_delay_ = np.array([p_nonscaling_delay_(y) for y in years])
+                    else:
+                        p_nonscaling_delay_ = np.array([p_nonscaling_delay_ for y in years])
                     # TODO: executing an arbitrary function from cache is not good
                     p_nonscaling_delay_ = p_nonscaling_delay_[y - variables['CURRENT_YEAR']]
                     this_nonscaling_issue = sq.event(p_nonscaling_delay_)
@@ -292,81 +298,3 @@ def p_event(variables, label, verbosity):
     if verbosity > 1:
         print('-- sampling {} p={} outcome={}'.format(label, p, outcome))
     return outcome
-
-
-def plot_anchors(anchor1=None, anchor2=None, anchor3=None, bins=100, alpha=0.6, label1=None, label2=None, label3=None,
-                verbose=True, xlim=[20, 75], figsize=(10,8)):
-    if label1 is None:
-        label1 = 'Anchor1'
-    if label2 is None:
-        label2 = 'Anchor2'
-    if label3 is None:
-        label3 = 'Anchor3'
-        
-    if anchor1 is None:
-        raise ValueError
-        
-    if anchor2 is None and anchor3 is not None:
-        raise ValueError('{} defined without defining {}'.foramt(label3, label2))
-
-    if anchor2 is not None and len(anchor1) != len(anchor2):
-        raise ValueError('{} and {} do not match length'.format(label1, label2))
-
-    if anchor3 is not None and len(anchor2) != len(anchor3):
-        raise ValueError('{} and {} do not match length'.format(label2, label3))
-        
-    if verbose:
-        print(label1)
-        pprint(sq.get_percentiles(anchor1, digits=1))
-        compare_anchor_to_gpt(anchor1)
-        print('-')
-        if anchor2 is not None:
-            print(label2)
-            pprint(sq.get_percentiles(anchor2, digits=1))
-            compare_anchor_to_gpt(anchor2)
-            print('-')
-        if anchor3 is not None:
-            print(label3)
-            pprint(sq.get_percentiles(anchor3, digits=1))
-            compare_anchor_to_gpt(anchor3)
-            print('-')
-        
-    if xlim:
-        anchor1 = [xlim[0] if a < xlim[0] else a for a in anchor1]
-        anchor1 = [xlim[1] if a > xlim[1] else a for a in anchor1]
-        if anchor2 is not None:
-            anchor2 = [xlim[0] if a < xlim[0] else a for a in anchor2]
-            anchor2 = [xlim[1] if a > xlim[1] else a for a in anchor2]
-        if anchor3 is not None:
-            anchor3 = [xlim[0] if a < xlim[0] else a for a in anchor3]
-            anchor3 = [xlim[1] if a > xlim[1] else a for a in anchor3]
-        
-    plt.figure(figsize=figsize)
-    plt.hist(anchor1, bins=bins, alpha=alpha, label=label1, color='black', lw=0)
-    if anchor2 is not None:
-        plt.hist(anchor2, bins=bins, alpha=alpha, label=label2, color='limegreen', lw=0)
-    if anchor3 is not None:
-        plt.hist(anchor3, bins=bins, alpha=alpha, label=label3, color='red', lw=0)
-        
-    plt.axvline(np.mean(anchor1), label='{} (mean)'.format(label1), color='black')
-    if anchor2 is not None:
-        plt.axvline(np.mean(anchor2), label='{} (mean)'.format(label2), color='green')
-    if anchor3 is not None:
-        plt.axvline(np.mean(anchor3), label='{} (mean)'.format(label2), color='red')
-    
-    plt.axvline(np.percentile(anchor1, q=10), label='{} (10% CI)'.format(label1), color='black', linestyle='--')
-    if anchor2 is not None:
-        plt.axvline(np.percentile(anchor2, q=10), label='{} (10% CI)'.format(label2), color='green', linestyle='--')
-    if anchor3 is not None:
-        plt.axvline(np.percentile(anchor3, q=10), label='{} (10% CI)'.format(label3), color='red', linestyle='--')
-    
-    plt.axvline(np.percentile(anchor1, q=90), label='{} (90% CI)'.format(label1), color='black', linestyle='--')
-    if anchor2 is not None:
-        plt.axvline(np.percentile(anchor2, q=90), label='{} (90% CI)'.format(label2), color='green', linestyle='--')
-    if anchor3 is not None:
-        plt.axvline(np.percentile(anchor3, q=90), label='{} (90% CI)'.format(label3), color='red', linestyle='--')
-        
-    plt.xlim(xlim)
-    plt.legend()
-    plt.show()
-    return None
