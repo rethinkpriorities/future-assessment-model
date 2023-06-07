@@ -79,17 +79,16 @@ def flop_at_max(initial_gdp, gdp_growth, initial_pay, spend_doubling_time, max_g
 def effective_flop_at_max(initial_gdp, gdp_growth, initial_pay, spend_doubling_time, max_gdp_frac,
                           initial_flop_per_dollar, max_flop_per_dollar, flop_halving_rate,
                           initial_flop, possible_reduction, doubling_rate, year):
-    return (willingness_to_pay(initial_gdp=initial_gdp,
-                               gdp_growth=gdp_growth,
-                               initial_pay=initial_pay,
-                               spend_doubling_time=spend_doubling_time,
-                               max_gdp_frac=max_gdp_frac,
-                               year=year) *
-            initial_flop_per_dollar *
-            (flop_per_dollar(initial_flop_per_dollar, max_flop_per_dollar, flop_halving_rate, year) /
-            flop_per_dollar(initial_flop_per_dollar, max_flop_per_dollar, flop_halving_rate, CURRENT_YEAR)) *
-            (flop_needed(initial_flop, possible_reduction, doubling_rate, CURRENT_YEAR) /
-             flop_needed(initial_flop, possible_reduction, doubling_rate, year)))
+    wtp = willingness_to_pay(initial_gdp=initial_gdp,
+                             gdp_growth=gdp_growth,
+                             initial_pay=initial_pay,
+                             spend_doubling_time=spend_doubling_time,
+                             max_gdp_frac=max_gdp_frac,
+                             year=year)
+    fpd = flop_per_dollar(initial_flop_per_dollar, max_flop_per_dollar, flop_halving_rate, year)
+    fn = (flop_needed(initial_flop, possible_reduction, doubling_rate, 0) /
+          flop_needed(initial_flop, possible_reduction, doubling_rate, year))
+    return wtp * fpd * fn
 
 
 def possible_algo_reduction_fn(min_reduction, max_reduction, tai_flop_size):
@@ -180,6 +179,9 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
             cost_of_tai_ = flop_needed_ // flop_per_dollar_
         else:
             cost_of_tai_ = flop_needed_ / flop_per_dollar_
+
+        if cost_of_tai_ <= 1:
+            cost_of_tai_ = 1
         
         if variables['CURRENT_YEAR'] >= 2025:
             raise ValueError('CURRENT_YEAR >= 2025 not currently supported')
@@ -922,7 +924,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     plt.show()
 
     for y in years[:10] + years[10::10]:
-        outstr = 'Year: {} - max log FLOP {} (~{}) 90% CI {} (~{}) - {} (~{})'
+        outstr = 'Year: {} - max log effective 2023-FLOP {} (~{}) 90% CI {} (~{}) - {} (~{})'
         print(outstr.format(y,
                             np.round(np.log10(effective_flop_at_max_50[y - variables['CURRENT_YEAR']]), 1),
                             numerize(effective_flop_at_max_50[y - variables['CURRENT_YEAR']]),
