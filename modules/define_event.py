@@ -3,18 +3,15 @@ import time
 
 from copy import deepcopy
 
-
-STATES = ['boring', 'xrisk_tai_misuse', 'xrisk_tai_misuse_extinction', 'aligned_tai',
-          'aligned_tai_ends_time_of_perils', 'aligned_tai_does_not_end_time_of_perils',
-          'xrisk_full_unaligned_tai_extinction', 'xrisk_full_unaligned_tai_singleton',
-          'xrisk_subtly_unaligned_tai', 'xrisk_unknown_unknown', 'xrisk_nanotech',
-          'xrisk_nukes_war', 'xrisk_nukes_accident', 'xrisk_bio_accident', 'xrisk_bio_war',
-          'xrisk_bio_nonstate', 'xrisk_supervolcano']
-
 extinctions = ['xrisk_full_unaligned_tai_extinction', 'xrisk_tai_misuse_extinction',
                'xrisk_nukes_war', 'xrisk_nukes_accident', 'xrisk_unknown_unknown',
                'xrisk_nanotech', 'xrisk_bio_accident', 'xrisk_bio_war', 'xrisk_bio_nonstate',
                'xrisk_supervolcano']
+
+FUTURES = (extinctions + [e + '_but_its_morally_good_actually' for e in extinctions] +
+           ['boring', 'xrisk_tai_misuse', 'aligned_tai', 'aligned_tai_ends_time_of_perils',
+            'aligned_tai_does_not_end_time_of_perils', 'xrisk_full_unaligned_tai_singleton',
+            'xrisk_full_unaligned_but_morally_good_tai_singleton', 'xrisk_subtly_unaligned_tai'])
 
 
 def define_event(variables, verbosity=0):
@@ -34,7 +31,7 @@ def define_event(variables, verbosity=0):
              'nuclear_weapon_used': False, 'catastrophe': [], 'recent_catastrophe_year': None,
              'terminate': False, 'final_year': None, 'double_catastrophe_xrisk': None,
              'initial_delays_calculated': False, 'total_delay': 0, 'compute_needs_announced': False,
-             'time_of_perils_end_calculated': False}
+             'time_of_perils_end_calculated': False, 'termination_processed': False}
     allowed_state_keys = list(state.keys())
     collectors = {}
     tai_year_data = random.choice(vars_['tai_years'])
@@ -69,8 +66,21 @@ def define_event(variables, verbosity=0):
                    unknown_unknown_scenarios_module]
         random.shuffle(modules)
         for module in modules:
-            if not state['terminate']:
+            if state['terminate']:
+                if not state['termination_processed']:
+                    if state['category'] in extinctions and p_event(vars_, 'extinction_is_morally_good_actually', verbosity):
+                        if verbosity:
+                            print('...but the extinction is morally good actually because the present/future is net negative')
+                        state['category'] = state['category'] + '_but_its_morally_good_actually'
+                    elif (state['category'] in ['tai_misuse_extinction', 'xrisk_full_unaligned_tai_singleton'] and 
+                          p_event(vars_, 'misaligned_tai_takeover_is_still_morally_fine', verbosity)):
+                        state['category'] = 'xrisk_full_unaligned_but_morally_good_tai_singleton'
+                        if verbosity:
+                            print('...but the TAI singleton is still good because the TAI\'s values are still morally good.')
+                    state['termination_processed'] = True
+            else:
                 state = module(y, state, vars_, verbosity)
+
         
         # Check for double dip catastrophe
         vars_['catastrophe_this_year'] = len(state['catastrophe']) > vars_['n_catastrophes']
@@ -101,8 +111,8 @@ def define_event(variables, verbosity=0):
         for k in list(state.keys()):
             if k not in allowed_state_keys:
                 raise ValueError('key {} found and not provisioned'.format(k))
-        if state['category'] not in STATES:
-            raise ValueError('State {} not in `STATES`'.format(state['category']))
+        if state['category'] not in FUTURES:
+            raise ValueError('State {} not in `FUTURES`'.format(state['category']))
 
         # Run collectors
         collectors[y] = deepcopy(state)
@@ -120,6 +130,7 @@ def define_event(variables, verbosity=0):
         state['final_year'] = '>{}'.format(y)
 
     if verbosity > 0:
+        print('label for this FUTURE => {}'.format(state['category']))
         print('-')
         print('-')
     
