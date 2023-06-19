@@ -5,8 +5,9 @@ def nano_scenarios_module(y, state, variables, verbose):
             if verbose:
                 print('{}: ...XRISK from nanotech :('.format(y))
             state['category'] = 'xrisk_nanotech'
-            state['catastrophe'].append(state['category'])
-            state['terminate'] = True; state['final_year'] = y
+            state['catastrophe'].append({'catastrophe': state['category'], 'year': y})
+            state['terminate'] = True
+            state['final_year'] = y
         # TODO: Catastrophic but non x-risk nano?
         # TODO: catastrophe or nano x-risk but not in the first year?
                         

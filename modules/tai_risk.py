@@ -15,9 +15,11 @@ def attempt_to_avert_misaligned_tai(state, variables, y, verbosity, intentional_
             state['tai_type'] = 'abandoned' # TODO: Maybe resume TAI with lower chance of happening?
             if intentional_misuse:
                 state['tai_alignment_state'] = 'deliberate_misuse'
-                state['catastrophe'].append('averting_intentional_tai')
+                state['catastrophe'].append({'catastrophe': 'averting_intentional_tai',
+                                             'year': y})
             else:
-                state['catastrophe'].append('averting_misaligned_tai')
+                state['catastrophe'].append({'catastrophe': 'averting_misaligned_tai',
+                                             'year': y})
         elif p_event(variables, 'p_full_tai_misalignment_averted_means_abandoned_tai', verbosity):
             if verbosity:
                 print('{}: ...{} happened, it was averted with no catastrophe, and we abandon TAI'.format(y, msg))
@@ -31,7 +33,8 @@ def attempt_to_avert_misaligned_tai(state, variables, y, verbosity, intentional_
             print('{}: ...XRISK from fully unaligned TAI (extinction) :('.format(y))
         state['category'] = 'xrisk_full_unaligned_tai_extinction'
         state['tai_type'] = 'agent'
-        state['catastrophe'].append(state['category'])
+        state['catastrophe'].append({'catastrophe': state['category'],
+                                     'year': y})
         state['terminate'] = True
         state['final_year'] = y
         state['tai'] = True
@@ -58,7 +61,8 @@ def attempt_to_avert_misaligned_tai(state, variables, y, verbosity, intentional_
         if p_event(variables, 'p_tai_singleton_is_catastrophic', verbosity):
             if verbosity:
                 print('...Singleton is catastrophic')
-        state['catastrophe'].append(state['category'])
+        state['catastrophe'].append({'catastrophe': state['category'],
+                                     'year': y})
         state['terminate'] = True
         state['final_year'] = y
         state['tai'] = True

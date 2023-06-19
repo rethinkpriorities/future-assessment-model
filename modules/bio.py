@@ -6,12 +6,15 @@ def bio_scenarios_module(y, state, variables, verbose):
                 if verbose:
                     print('{}: ...XRISK from pathogen (lab-leak) :('.format(y))
                 state['category'] = 'xrisk_bio_accident'
-                state['terminate'] = True; state['final_year'] = y
-                state['catastrophe'].append('natural_pathogen')
+                state['terminate'] = True
+                state['final_year'] = y
+                state['catastrophe'].append({'catastrophe': 'natural_pathogen',
+                                             'year': y})
             else:
                 if verbose:
                     print('{}: ...catastrophe from natural pathogen'.format(y))
-                state['catastrophe'].append('natural_pathogen')
+                state['catastrophe'].append({'catastrophe': 'natural_pathogen',
+                                             'year': y})
 
     if not state['terminate'] and sq.event(variables['p_accidental_bio'](state['war'], variables)):
         state['lab_leak'] = True
@@ -25,15 +28,18 @@ def bio_scenarios_module(y, state, variables, verbose):
                 if verbose:
                     print('{}: ...XRISK from pathogen (lab-leak) :('.format(y))
                 state['category'] = 'xrisk_bio_accident'
-                state['terminate'] = True; state['final_year'] = y
-                state['catastrophe'].append('engineered_pathogen' if engineered else 'natural_pathogen')
+                state['terminate'] = True
+                state['final_year'] = y
+                state['catastrophe'].append({'catastrophe': 'engineered_pathogen' if engineered else 'natural_pathogen',
+                                             'year': y})
             else:
                 if verbose:
                     if engineered:
                         print('{}: ...catastrophe from lab-leak engineered pathogen'.format(y))
                     else:
                         print('{}: ...catastrophe from lab-leak natural pathogen'.format(y))
-                state['catastrophe'].append('engineered_pathogen' if engineered else 'natural_pathogen')
+                state['catastrophe'].append({'catastrophe': 'engineered_pathogen' if engineered else 'natural_pathogen',
+                                             'year': y})
     
     if not state['terminate'] and state['war'] and sq.event(variables['p_biowar_given_war']):
         state['engineered_pathogen'] = True
@@ -43,12 +49,15 @@ def bio_scenarios_module(y, state, variables, verbose):
                 if verbose:
                     print('{}: ...XRISK from pathogen (war) :('.format(y))
                 state['category'] = 'xrisk_bio_war'
-                state['terminate'] = True; state['final_year'] = y
-                state['catastrophe'].append('engineered_pathogen')
+                state['terminate'] = True
+                state['final_year'] = y
+                state['catastrophe'].append({'catastrophe': 'engineered_pathogen',
+                                             'year': y})
             else:
                 if verbose:
                     print('{}: ...catastrophe from pathogen (war)'.format(y))
-                state['catastrophe'].append('engineered_pathogen')
+                state['catastrophe'].append({'catastrophe': 'engineered_pathogen',
+                                             'year': y})
     
     if not state['terminate'] and sq.event(variables['p_nonstate_bio']):
         state['nonstate_bioweapon'] = True
@@ -62,14 +71,17 @@ def bio_scenarios_module(y, state, variables, verbose):
                 if verbose:
                     print('{}: ...XRISK from pathogen (nonstate) :('.format(y))
                 state['category'] = 'xrisk_bio_nonstate'
-                state['terminate'] = True; state['final_year'] = y
-                state['catastrophe'].append('engineered_pathogen' if engineered else 'natural_pathogen')
+                state['terminate'] = True
+                state['final_year'] = y
+                state['catastrophe'].append({'catastrophe': 'engineered_pathogen' if engineered else 'natural_pathogen',
+                                             'year': y})
             else:
                 if verbose:
                     if engineered:
                         print('{}: ...catastrophe from engineered pathogen'.format(y))
                     else:
                         print('{}: ...catastrophe from natural pathogen'.format(y))
-                state['catastrophe'].append('engineered_pathogen' if engineered else 'natural_pathogen')
+                state['catastrophe'].append({'catastrophe': 'engineered_pathogen' if engineered else 'natural_pathogen',
+                                             'year': y})
                 
     return state

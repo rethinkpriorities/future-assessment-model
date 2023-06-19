@@ -3,9 +3,11 @@ def unknown_unknown_scenarios_module(y, state, variables, verbose):
         if verbose:
             print('{}: ...XRISK from unknown unknown'.format(y))
         state['category'] = 'xrisk_unknown_unknown'
-        state['catastrophe'].append(state['category'])
+        state['catastrophe'].append({'catastrophe': state['category'],
+                                     'year': y})
         # TODO: What % of "unknown unknowns" are extinction?
         # TODO: catastrophic but not x-risk unknown unknowns?
-        state['terminate'] = True; state['final_year'] = y
+        state['terminate'] = True
+        state['final_year'] = y
         
     return state

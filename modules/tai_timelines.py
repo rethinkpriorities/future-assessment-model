@@ -162,6 +162,7 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
             print('We are willing to spend over {} years to make TAI'.format(willingness_spend_horizon_))
         print('---')
     
+    effective_flop_ = 0
     for y in years:
         flop_needed_ = flop_needed(initial_flop=10 ** tai_flop_size_,
                                    doubling_rate=algo_doubling_rate_,
@@ -172,20 +173,21 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                                            max_flop_per_dollar=max_flop_per_dollar_,
                                            halving_rate=flop_halving_rate_,
                                            year=(y - variables['CURRENT_YEAR']))
-        
-        if flop_per_dollar_ > 10 ** 200 or flop_needed_ > 10 ** 200:
-            flop_needed_ = int(flop_needed_)
-            flop_per_dollar_ = int(flop_per_dollar_)
-            cost_of_tai_ = flop_needed_ // flop_per_dollar_
-        else:
-            cost_of_tai_ = flop_needed_ / flop_per_dollar_
+
+        overflow = flop_per_dollar_ > 10 ** 200 or flop_needed_ > 10 ** 200
+        flop_needed_ = int(flop_needed_) if overflow else flop_needed_
+        flop_per_dollar_ = int(flop_per_dollar_) if overflow else flop_per_dollar_
+        cost_of_tai_ = flop_needed_ // flop_per_dollar_ if overflow else flop_needed_ / flop_per_dollar_
 
         if cost_of_tai_ <= 1:
             cost_of_tai_ = 1
-        
+        if initial_cost_of_tai_ is None:
+            initial_cost_of_tai_ = cost_of_tai_
+
+        cost_ratio_ = initial_cost_of_tai_ // cost_of_tai_ if overflow else initial_cost_of_tai_ // cost_of_tai_
+
         if variables['CURRENT_YEAR'] >= 2025:
             raise ValueError('CURRENT_YEAR >= 2025 not currently supported')
-
 
         if y <= 2025 or spend_doubling_time_2025_ == spend_doubling_time_:
             willingness_ = willingness_to_pay(initial_gdp=initial_gdp_,
@@ -212,17 +214,20 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
         if not tai_created and print_diagnostic:
             cost_of_tai_collector.append(cost_of_tai_)
             willingness_collector.append(willingness_)
-        
-        if flop_per_dollar_ > 10 ** 200:
-            willingness_ = int(willingness_)
-        if willingness_ > 10 ** 200:
+
+        if willingness_ > 10 ** 150:
+            willingness_ = int(10 ** 150)
             flop_per_dollar_ = int(flop_per_dollar_)
-        
+            cost_ratio_ = int(cost_ratio_)
+
+        if flop_per_dollar_ > 10 ** 150:
+            flop_per_dollar_ = int(10 ** 150)
+            willingness_ = int(willingness_)
+            cost_ratio_ = int(cost_ratio_)
+
         total_compute_ = willingness_ * flop_per_dollar_
 
-        if initial_cost_of_tai_ is None:
-            initial_cost_of_tai_ = cost_of_tai_
-        effective_flop_ = willingness_ * initial_flop_per_dollar_ * (initial_cost_of_tai_ / cost_of_tai_)
+        effective_flop_ = willingness_ * initial_flop_per_dollar_ * cost_ratio_
         effective_flop_collector.append(effective_flop_)
         
         if not tai_created and print_diagnostic:
@@ -392,11 +397,15 @@ def print_tai_arrival_stats(tai_years, variables):
     cdf = np.cumsum(pdf)
 
     plt.plot(bins, cdf[:len(bins)], label='CDF')
+    if variables['MAX_YEAR'] > 2200:
+        plt.xlim([variables['CURRENT_YEAR'], 2200])
     plt.legend()
     plt.show()
 
     pdf_smoothed = savitzky_golay(pdf[:len(bins)], 51, 3)
     plt.plot(bins, pdf_smoothed, label='PDF (smoothed)')
+    if variables['MAX_YEAR'] > 2200:
+        plt.xlim([variables['CURRENT_YEAR'], 2200])
     plt.legend()
     plt.show()
 
@@ -486,6 +495,9 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     print_tai_arrival_stats([t['tai_year'] for t in tai_years], variables)
     print('-')
     print('-')
+
+    if variables['MAX_YEAR'] > 2200:
+        years = list(range(variables['CURRENT_YEAR'], 2200))
 
     initial_flop_s = variables['tai_flop_size']
     if sq.is_sampleable(initial_flop_s):

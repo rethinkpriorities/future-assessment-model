@@ -63,7 +63,7 @@ def cotra_anchor(horizon_length, bayes_update=cotra_bayes_update_against_low_flo
 
 def plot_anchors(anchor1=None, anchor2=None, anchor3=None, anchor4=None, anchor5=None, anchor6=None,
                  label1=None, label2=None, label3=None, label4=None, label5=None, label6=None,
-                 bins=100, alpha=0.6, verbose=True, xlim=[20, 75], figsize=(10,8), disable_lines=False):
+                 bins=100, alpha=0.6, verbose=True, xlim=[20, 75], figsize=(10,8), disable_ci_lines=False):
     if label1 is None:
         label1 = 'Anchor1'
     if label2 is None:
@@ -89,20 +89,15 @@ def plot_anchors(anchor1=None, anchor2=None, anchor3=None, anchor4=None, anchor5
     if anchor4 is None and anchor5 is not None:
         raise ValueError('{} defined without defining {}'.foramt(label5, label4))
 
-    if anchor2 is not None and isinstance(anchor2, np.ndarray) and len(anchor1) != len(anchor2):
-        raise ValueError('{} and {} do not match length'.format(label1, label2))
+    if anchor5 is None and anchor6 is not None:
+        raise ValueError('{} defined without defining {}'.foramt(label6, label5))
 
-    if anchor3 is not None and isinstance(anchor3, np.ndarray) and len(anchor2) != len(anchor3):
-        raise ValueError('{} and {} do not match length'.format(label2, label3))
-
-    if anchor4 is not None and isinstance(anchor4, np.ndarray) and len(anchor3) != len(anchor4):
-        raise ValueError('{} and {} do not match length'.format(label3, label4))
-
-    if anchor5 is not None and isinstance(anchor5, np.ndarray) and len(anchor4) != len(anchor5):
-        raise ValueError('{} and {} do not match length'.format(label4, label5))
-
-    if anchor6 is not None and isinstance(anchor6, np.ndarray) and len(anchor5) != len(anchor6):
-        raise ValueError('{} and {} do not match length'.format(label5, label6))
+    anchors = [anchor1, anchor2, anchor3, anchor4, anchor5, anchor6]
+    anchors = [a for a in anchors if isinstance(a, np.ndarray) or isinstance(a, float)]
+    if len(anchors) > 1:
+        lenx = len(anchors[0])
+        if not all([len(a) == lenx for a in anchors]):
+            raise ValueError('anchors do not match length')
         
     if verbose:
         print(label1)
@@ -172,7 +167,7 @@ def plot_anchors(anchor1=None, anchor2=None, anchor3=None, anchor4=None, anchor5
         else:
             plt.axvline(anchor6, label=label6, color='brown')
         
-    if not disable_lines:
+    if not disable_ci_lines:
         plt.axvline(np.mean(anchor1), label='{} (mean)'.format(label1), color='black')
         plt.axvline(np.percentile(anchor1, q=10), label='{} (10% CI)'.format(label1), color='black', linestyle='--')
         plt.axvline(np.percentile(anchor1, q=90), label='{} (90% CI)'.format(label1), color='black', linestyle='--')
