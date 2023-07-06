@@ -498,6 +498,8 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
 
     if variables['MAX_YEAR'] > 2200:
         years = list(range(variables['CURRENT_YEAR'], 2200))
+    else:
+        years = list(range(variables['CURRENT_YEAR'], variables['MAX_YEAR']))
 
     initial_flop_s = variables['tai_flop_size']
     if sq.is_sampleable(initial_flop_s):
