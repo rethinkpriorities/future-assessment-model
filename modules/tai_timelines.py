@@ -140,19 +140,21 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                                           year=0)
 
         if spend_doubling_time_2025_ != spend_doubling_time_:
-            print(('We are initially willing to pay {} log 2022$USD (~{}). This doubles every {} years until 2025, and then doubles every {} years to a max of {}% of GDP. ' +
+            print(('We are initially willing to pay {} log 2022$USD (~{}). This doubles every {} years until 2025, and then doubles every {} years to a max of {}% of GDP (initially ~{} 2022$USD). ' +
                    'GDP grows at a rate of {}x per year.').format(np.round(math.log10(initial_pay_), 1),
                                                                   numerize(initial_pay_),
                                                                   np.round(spend_doubling_time_2025_, 1),
                                                                   np.round(spend_doubling_time_, 1),
                                                                   np.round(max_gdp_frac_ * 100, 6),
+                                                                  numerize(max_gdp_frac_ * initial_gdp_),
                                                                   np.round(gdp_growth_, 3)))
         else:
-            print(('We are initially willing to pay {} log 2022$USD (~{}). This doubles every {} years to a max of {}% of GDP. ' +
+            print(('We are initially willing to pay {} log 2022$USD (~{}). This doubles every {} years to a max of {}% of GDP (initially ~{} 2022$USD). ' +
                    'GDP grows at a rate of {}x per year.').format(np.round(math.log10(initial_pay_), 1),
                                                                   numerize(initial_pay_),
                                                                   np.round(spend_doubling_time_, 1),
                                                                   np.round(max_gdp_frac_ * 100, 6),
+                                                                  numerize(max_gdp_frac_ * initial_gdp_),
                                                                   np.round(gdp_growth_, 3)))
 
         if willingness_ramp_ < 1:
@@ -989,8 +991,8 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
 
     print('-')
     print('-')
-    print('## Aggregate nonscaling delay length ##')
-    delay_samples = [t['delay'] for t in tai_years]
+    print('## Aggregate nonscaling delay length (conditional on TAI <2100) ##')
+    delay_samples = [t['delay'] for t in tai_years if t['tai_year'] < 2100]
     pprint(sq.get_percentiles(delay_samples, digits=0))
     plt.hist(delay_samples, bins=200)
     plt.xlabel('total years of delay')
