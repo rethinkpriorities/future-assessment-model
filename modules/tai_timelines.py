@@ -109,7 +109,6 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
         willingness_collector = []
 
     queue_tai_year = 99999
-    effective_flop_collector = []
     tai_created = False
     is_nonscaling_issue = None
     nonscaling_delay_out = 0
@@ -166,119 +165,118 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
     
     effective_flop_ = 0
     for y in years:
-        flop_needed_ = flop_needed(initial_flop=10 ** tai_flop_size_,
-                                   doubling_rate=algo_doubling_rate_,
-                                   possible_reduction=10 ** possible_algo_reduction_,
-                                   year=(y - variables['CURRENT_YEAR']))
-        
-        flop_per_dollar_ = flop_per_dollar(initial_flop_per_dollar=initial_flop_per_dollar_,
-                                           max_flop_per_dollar=max_flop_per_dollar_,
-                                           halving_rate=flop_halving_rate_,
-                                           year=(y - variables['CURRENT_YEAR']))
-
-        overflow = flop_per_dollar_ > 10 ** 200 or flop_needed_ > 10 ** 200
-        flop_needed_ = int(flop_needed_) if overflow else flop_needed_
-        flop_per_dollar_ = int(flop_per_dollar_) if overflow else flop_per_dollar_
-        cost_of_tai_ = flop_needed_ // flop_per_dollar_ if overflow else flop_needed_ / flop_per_dollar_
-
-        if cost_of_tai_ <= 1:
-            cost_of_tai_ = 1
-        if initial_cost_of_tai_ is None:
-            initial_cost_of_tai_ = cost_of_tai_
-
-        cost_ratio_ = initial_cost_of_tai_ // cost_of_tai_ if overflow else initial_cost_of_tai_ // cost_of_tai_
-
-        if variables['CURRENT_YEAR'] >= 2025:
-            raise ValueError('CURRENT_YEAR >= 2025 not currently supported')
-
-        if y <= 2025 or spend_doubling_time_2025_ == spend_doubling_time_:
-            willingness_ = willingness_to_pay(initial_gdp=initial_gdp_,
-                                              gdp_growth=gdp_growth_,
-                                              initial_pay=initial_pay_,
-                                              spend_doubling_time=spend_doubling_time_2025_,
-                                              max_gdp_frac=max_gdp_frac_,
-                                              year=y - variables['CURRENT_YEAR'])
-        else:
-            willingness_2025_ = willingness_to_pay(initial_gdp=initial_gdp_,
-                                                   gdp_growth=gdp_growth_,
-                                                   initial_pay=initial_pay_,
-                                                   spend_doubling_time=spend_doubling_time_2025_,
-                                                   max_gdp_frac=max_gdp_frac_,
-                                                   year=2025 - variables['CURRENT_YEAR'])
-            gdp_2025_ = 10 ** gdp(initial_gdp=np.log10(initial_gdp_), gdp_growth=gdp_growth_, year=2025 - variables['CURRENT_YEAR'])
-            willingness_ = willingness_to_pay(initial_gdp=gdp_2025_,
-                                              gdp_growth=gdp_growth_,
-                                              initial_pay=willingness_2025_,
-                                              spend_doubling_time=spend_doubling_time_,
-                                              max_gdp_frac=max_gdp_frac_,
-                                              year=y - 2025)
-        
-        if not tai_created and print_diagnostic:
-            cost_of_tai_collector.append(cost_of_tai_)
-            willingness_collector.append(willingness_)
-
-        if willingness_ > 10 ** 150:
-            willingness_ = int(10 ** 150)
-            flop_per_dollar_ = int(flop_per_dollar_)
-            cost_ratio_ = int(cost_ratio_)
-
-        if flop_per_dollar_ > 10 ** 150:
-            flop_per_dollar_ = int(10 ** 150)
-            willingness_ = int(willingness_)
-            cost_ratio_ = int(cost_ratio_)
-
-        total_compute_ = willingness_ * flop_per_dollar_
-
-        effective_flop_ = willingness_ * initial_flop_per_dollar_ * cost_ratio_
-        effective_flop_collector.append(effective_flop_)
-        
-        if not tai_created and print_diagnostic:
-            out_str = ('Year: {} - {} max log FLOP ({}) available - TAI takes {} log FLOP ({}) - ' +
-                       'log $ {} to buy TAI ({}) vs. willingness to pay log $ {} ({}) - {} log FLOP per $ ({}) (Effective 2023-logFLOP: {})')
-            print(out_str.format(y,
-                                 np.round(math.log10(total_compute_), 1),
-                                 numerize(total_compute_),
-                                 np.round(math.log10(flop_needed_), 1),
-                                 numerize(flop_needed_),
-                                 np.round(math.log10(cost_of_tai_), 1),
-                                 numerize(cost_of_tai_),
-                                 np.round(math.log10(willingness_), 1),
-                                 numerize(willingness_),
-                                 np.round(math.log10(flop_per_dollar_), 1),
-                                 numerize(flop_per_dollar_),
-                                 np.round(math.log10(effective_flop_), 1)))
-        
-        if cost_of_tai_ > 10 ** 200:
-            spend_tai_years = int(cost_of_tai_) // int(willingness_)
-        else:
-            spend_tai_years = cost_of_tai_ / willingness_
+        if not tai_created:
+            flop_needed_ = flop_needed(initial_flop=10 ** tai_flop_size_,
+                                       doubling_rate=algo_doubling_rate_,
+                                       possible_reduction=10 ** possible_algo_reduction_,
+                                       year=(y - variables['CURRENT_YEAR']))
             
-        if not tai_created and not is_nonscaling_issue and queue_tai_year < 99999 and print_diagnostic:
-            print('-$- {}/{}'.format(y, queue_tai_year))
-        if (not tai_created and
-            ((cost_of_tai_ * willingness_ramp_) <= willingness_ or y >= queue_tai_year)):
-            if is_nonscaling_issue is None:
-                delay_data = calculate_nonscaling_delay(y, nonscaling_delay_, variables, print_diagnostic)
-                is_nonscaling_issue = delay_data['is_nonscaling_issue']
-                nonscaling_delay_out = delay_data['nonscaling_delay_out']
-                nonscaling_countdown = delay_data['nonscaling_countdown']
-                
-            if not is_nonscaling_issue or nonscaling_countdown <= 0.1:
-                if print_diagnostic:
-                    print('--- /!\ TAI CREATED in {}'.format(y))
-                    plot_tai(plt, years, cost_of_tai_collector, willingness_collector).show()
-                tai_created = True
-                tai_year = y
+            flop_per_dollar_ = flop_per_dollar(initial_flop_per_dollar=initial_flop_per_dollar_,
+                                               max_flop_per_dollar=max_flop_per_dollar_,
+                                               halving_rate=flop_halving_rate_,
+                                               year=(y - variables['CURRENT_YEAR']))
+
+            overflow = flop_per_dollar_ > 10 ** 200 or flop_needed_ > 10 ** 200
+            flop_needed_ = int(flop_needed_) if overflow else flop_needed_
+            flop_per_dollar_ = int(flop_per_dollar_) if overflow else flop_per_dollar_
+            cost_of_tai_ = flop_needed_ // flop_per_dollar_ if overflow else flop_needed_ / flop_per_dollar_
+
+            if cost_of_tai_ <= 1:
+                cost_of_tai_ = 1
+            if initial_cost_of_tai_ is None:
+                initial_cost_of_tai_ = cost_of_tai_
+
+            cost_ratio_ = initial_cost_of_tai_ // cost_of_tai_ if overflow else initial_cost_of_tai_ // cost_of_tai_
+
+            if variables['CURRENT_YEAR'] >= 2025:
+                raise ValueError('CURRENT_YEAR >= 2025 not currently supported')
+
+            if y <= 2025 or spend_doubling_time_2025_ == spend_doubling_time_:
+                willingness_ = willingness_to_pay(initial_gdp=initial_gdp_,
+                                                  gdp_growth=gdp_growth_,
+                                                  initial_pay=initial_pay_,
+                                                  spend_doubling_time=spend_doubling_time_2025_,
+                                                  max_gdp_frac=max_gdp_frac_,
+                                                  year=y - variables['CURRENT_YEAR'])
             else:
+                willingness_2025_ = willingness_to_pay(initial_gdp=initial_gdp_,
+                                                       gdp_growth=gdp_growth_,
+                                                       initial_pay=initial_pay_,
+                                                       spend_doubling_time=spend_doubling_time_2025_,
+                                                       max_gdp_frac=max_gdp_frac_,
+                                                       year=2025 - variables['CURRENT_YEAR'])
+                gdp_2025_ = 10 ** gdp(initial_gdp=np.log10(initial_gdp_), gdp_growth=gdp_growth_, year=2025 - variables['CURRENT_YEAR'])
+                willingness_ = willingness_to_pay(initial_gdp=gdp_2025_,
+                                                  gdp_growth=gdp_growth_,
+                                                  initial_pay=willingness_2025_,
+                                                  spend_doubling_time=spend_doubling_time_,
+                                                  max_gdp_frac=max_gdp_frac_,
+                                                  year=y - 2025)
+            
+            if not tai_created and print_diagnostic:
+                cost_of_tai_collector.append(cost_of_tai_)
+                willingness_collector.append(willingness_)
+
+            if willingness_ > 10 ** 150:
+                willingness_ = int(10 ** 150)
+                flop_per_dollar_ = int(flop_per_dollar_)
+                cost_ratio_ = int(cost_ratio_)
+
+            if flop_per_dollar_ > 10 ** 150:
+                flop_per_dollar_ = int(10 ** 150)
+                willingness_ = int(willingness_)
+                cost_ratio_ = int(cost_ratio_)
+
+            total_compute_ = willingness_ * flop_per_dollar_
+            effective_flop_ = willingness_ * initial_flop_per_dollar_ * cost_ratio_
+            
+            if not tai_created and print_diagnostic:
+                out_str = ('Year: {} - {} max log FLOP ({}) available - TAI takes {} log FLOP ({}) - ' +
+                           'log $ {} to buy TAI ({}) vs. willingness to pay log $ {} ({}) - {} log FLOP per $ ({}) (Effective 2023-logFLOP: {})')
+                print(out_str.format(y,
+                                     np.round(math.log10(total_compute_), 1),
+                                     numerize(total_compute_),
+                                     np.round(math.log10(flop_needed_), 1),
+                                     numerize(flop_needed_),
+                                     np.round(math.log10(cost_of_tai_), 1),
+                                     numerize(cost_of_tai_),
+                                     np.round(math.log10(willingness_), 1),
+                                     numerize(willingness_),
+                                     np.round(math.log10(flop_per_dollar_), 1),
+                                     numerize(flop_per_dollar_),
+                                     np.round(math.log10(effective_flop_), 1)))
+            
+            if cost_of_tai_ > 10 ** 200:
+                spend_tai_years = int(cost_of_tai_) // int(willingness_)
+            else:
+                spend_tai_years = cost_of_tai_ / willingness_
+                
+            if not tai_created and not is_nonscaling_issue and queue_tai_year < 99999 and print_diagnostic:
+                print('-$- {}/{}'.format(y, queue_tai_year))
+            if (not tai_created and
+                ((cost_of_tai_ * willingness_ramp_) <= willingness_ or y >= queue_tai_year)):
+                if is_nonscaling_issue is None:
+                    delay_data = calculate_nonscaling_delay(y, nonscaling_delay_, variables, print_diagnostic)
+                    is_nonscaling_issue = delay_data['is_nonscaling_issue']
+                    nonscaling_delay_out = delay_data['nonscaling_delay_out']
+                    nonscaling_countdown = delay_data['nonscaling_countdown']
+                    
+                if not is_nonscaling_issue or nonscaling_countdown <= 0.1:
+                    if print_diagnostic:
+                        print('--- /!\ TAI CREATED in {}'.format(y))
+                        plot_tai(plt, years, cost_of_tai_collector, willingness_collector).show()
+                    tai_created = True
+                    tai_year = y
+                else:
+                    if print_diagnostic:
+                        print('/!\ FLOP for TAI sufficient but needs {} more years to solve non-scaling issues'.format(int(np.ceil(nonscaling_countdown))))
+                    nonscaling_countdown -= 1
+            elif (not is_nonscaling_issue and willingness_spend_horizon_ > 1 and
+                  spend_tai_years <= willingness_spend_horizon_ and y + math.ceil(spend_tai_years) < queue_tai_year):
+                queue_tai_year = y + math.ceil(spend_tai_years)
                 if print_diagnostic:
-                    print('/!\ FLOP for TAI sufficient but needs {} more years to solve non-scaling issues'.format(int(np.ceil(nonscaling_countdown))))
-                nonscaling_countdown -= 1
-        elif (not is_nonscaling_issue and willingness_spend_horizon_ > 1 and
-              spend_tai_years <= willingness_spend_horizon_ and y + math.ceil(spend_tai_years) < queue_tai_year):
-            queue_tai_year = y + math.ceil(spend_tai_years)
-            if print_diagnostic:
-                print('-$- We have enough spend to make TAI in {} years (in {}) if sustained.'.format(math.ceil(spend_tai_years),
-                                                                                                          queue_tai_year))
+                    print('-$- We have enough spend to make TAI in {} years (in {}) if sustained.'.format(math.ceil(spend_tai_years),
+                                                                                                              queue_tai_year))
                 
     if not tai_created:
         tai_year = variables['MAX_YEAR'] + 1
@@ -286,9 +284,7 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
             print('--- :/ TAI NOT CREATED BEFORE {}'.format(variables['MAX_YEAR'] + 1))
             plot_tai(plt, years, cost_of_tai_collector, willingness_collector).show()
 
-    return {'tai_year': int(tai_year),
-            'delay': int(nonscaling_delay_out),
-            'effective_flop': effective_flop_collector}
+    return {'tai_year': int(tai_year), 'delay': int(nonscaling_delay_out)}
 
 
 def print_graph(samples, label, reverse=False, digits=1):
@@ -334,7 +330,8 @@ def print_tai_arrival_stats(tai_years, variables):
 
 
     print('This year: {}%'.format(bin_tai_yrs(hi=variables['CURRENT_YEAR'])))
-    print('2024-2027: {}%'.format(bin_tai_yrs(2024, 2026)))
+    print('2024-2025: {}%'.format(bin_tai_yrs(2024, 2025)))
+    print('2026-2027: {}%'.format(bin_tai_yrs(2026, 2027)))
     print('2028-2029: {}%'.format(bin_tai_yrs(2027, 2029)))
     print('2030-2034: {}%'.format(bin_tai_yrs(2030, 2034)))
     print('2035-2039: {}%'.format(bin_tai_yrs(2035, 2039)))
@@ -353,15 +350,16 @@ def print_tai_arrival_stats(tai_years, variables):
     print('## TAI ARRIVAL DATE BY YEAR ##')
     print('By EOY 2024: {}%'.format(bin_tai_yrs(hi=2024)))
     print('By EOY 2025: {}%'.format(bin_tai_yrs(hi=2025)))
-    print('By EOY 2027: {}% (within 5 yrs)'.format(bin_tai_yrs(hi=2027)))
-    print('By EOY 2032: {}% (within 10yrs)'.format(bin_tai_yrs(hi=2032)))
+    print('By EOY 2026: {}%'.format(bin_tai_yrs(hi=2026)))
+    print('By EOY 2027: {}%'.format(bin_tai_yrs(hi=2027)))
+    print('By EOY 2028: {}% (within 5 yrs)'.format(bin_tai_yrs(hi=2028)))
+    print('By EOY 2033: {}% (within 10yrs)'.format(bin_tai_yrs(hi=2033)))
     print('By EOY 2040: {}%'.format(bin_tai_yrs(hi=2040)))
-    print('By EOY 2047: {}% (within 25yrs)'.format(bin_tai_yrs(hi=2047)))
+    print('By EOY 2048: {}% (within 25yrs)'.format(bin_tai_yrs(hi=2048)))
     print('By EOY 2050: {}%'.format(bin_tai_yrs(hi=2050)))
     print('By EOY 2060: {}%'.format(bin_tai_yrs(hi=2060)))
     print('By EOY 2070: {}%'.format(bin_tai_yrs(hi=2070)))
-    print('By EOY 2072: {}% (within 50yrs)'.format(bin_tai_yrs(hi=2072)))
-    print('By EOY 2078: {}% (within my expected lifetime)'.format(bin_tai_yrs(hi=2078)))
+    print('By EOY 2074: {}% (within 50yrs)'.format(bin_tai_yrs(hi=2074)))
     print('By EOY 2100: {}%'.format(bin_tai_yrs(hi=2100)))
     print('By EOY 2122: {}%'.format(bin_tai_yrs(hi=2122)))
     print('-')
