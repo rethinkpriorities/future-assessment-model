@@ -30,35 +30,15 @@ def define_event(variables, verbosity=0):
              'state_bioweapon': False, 'nonstate_bioweapon': False,
              'averted_misalignment': False, 'nuclear_weapon_used': [],
              'catastrophe': [], 'terminate': False, 'final_year': None,
-             'double_catastrophe_xrisk': None, 'initial_delays_calculated': False,
-             'total_delay': 0, 'compute_needs_announced': False,
-             'time_of_perils_end_calculated': False, 'termination_processed': False}
+             'double_catastrophe_xrisk': None, 'time_of_perils_end_calculated': False,
+             'total_delay': 0, 'termination_processed': False}
     allowed_state_keys = list(state.keys())
     collectors = {}
-    tai_year_data = random.choice(vars_['tai_years'])
-    effective_flops = tai_year_data['effective_flop']
+    tai_year = sq.sample(sq.discrete([y['tai_year'] for y in variables['tai_years']]))
     us_china_war_tai_delay_has_occurred = False
 
-    # TODO: Make `vars_['threat_model'] = None` work
-    if vars_['threat_model'] is not None:
-        for i, v in enumerate(vars_['threat_model']):
-            if i == 0:
-                vars_['threat_model'][0][1] = float(sq.sample(vars_['threat_model'][0][1]))
-            else:
-                vars_['threat_model'][i][1] = float(sq.sample(vars_['threat_model'][i][1])) + vars_['threat_model'][i - 1][1]
-            # TODO: why is `float` needed here? Produces array(29.15852056) otherwise - should fix.
-
-    vars_['p_narrower_threat_is_xrisk_no_misuse'] = 0.05 # TODO: move this and next line into list of user modifiable variables in Jupyter
-    vars_['p_narrower_threat_is_xrisk_misuse'] = 0.7
-    vars_['narrower_threat_is_xrisk_no_misuse'] = p_event(vars_, 'p_narrower_threat_is_xrisk_no_misuse', verbosity)
-    vars_['narrower_threat_is_xrisk_misuse'] = p_event(vars_, 'p_narrower_threat_is_xrisk_misuse', verbosity)
-    
     for y in years:
         if not state['termination_processed']:
-            if not state['initial_delays_calculated']:
-                y_ = y - vars_['CURRENT_YEAR']
-                vars_['effective_flop'] = effective_flops[-1] if y_ >= len(effective_flops) else effective_flops[y_]
-
             # Run modules in a random order
             modules = [tai_scenarios_module,
                        great_power_war_scenarios_module,
@@ -68,6 +48,7 @@ def define_event(variables, verbosity=0):
                        supervolcano_scenarios_module,
                        unknown_unknown_scenarios_module]
             random.shuffle(modules)
+
             for module in modules:
                 if state['terminate']:
                     if not state['termination_processed']:
@@ -108,6 +89,13 @@ def define_event(variables, verbosity=0):
 
             # Check for time of perils
             state = check_for_time_of_perils(y, state, vars_, verbosity)
+
+            # Check if TAI is created this year
+            if not state['terminate'] and not state['tai'] and y >= (tai_year + state['total_delay']):
+                if verbosity > 0:
+                    print('--- /!\ TAI CREATED in {}'.format(y))
+                state['tai'] = True
+                state['tai_year'] = y
 
             # Enforce validity of state
             for k in list(state.keys()):
