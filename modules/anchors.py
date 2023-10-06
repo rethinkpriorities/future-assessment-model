@@ -45,9 +45,8 @@ def cotra_bayes_update_against_low_flop(f):
 def peter_bayes_update_against_low_flop(f):
     f = f + ~sq.lognorm(1,3) if f < 26 else f
     f = f + ~sq.lognorm(1,4) if f < 25 else f
-    f = f + ~sq.lognorm(1,5) if f < 24 else f
-    f = f + ~sq.lognorm(2,6) if f < 23 else f
-    f = 23 if f < 23 else f
+    f = f + ~sq.lognorm(2,5) if f < 24 else f
+    f = 24 if f < 24 else f
     return f
 
 
@@ -199,7 +198,7 @@ def plot_anchors(anchor1=None, anchor2=None, anchor3=None, anchor4=None, anchor5
     
     plt.xlim(xlim)
     plt.xlabel('log10 of total FLOP for training')
-    plt.title('Distribution of total training compute needed to meet human-level performance')
+    plt.title('Distribution of total training compute needed')
     plt.legend()
     plt.show()
     return None
