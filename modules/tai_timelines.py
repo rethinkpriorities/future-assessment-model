@@ -186,7 +186,7 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
             if initial_cost_of_tai_ is None:
                 initial_cost_of_tai_ = cost_of_tai_
 
-            cost_ratio_ = initial_cost_of_tai_ // cost_of_tai_ if overflow else initial_cost_of_tai_ // cost_of_tai_
+            cost_ratio_ = initial_cost_of_tai_ // cost_of_tai_ if overflow else initial_cost_of_tai_ / cost_of_tai_
 
             if variables['CURRENT_YEAR'] >= 2025:
                 raise ValueError('CURRENT_YEAR >= 2025 not currently supported')
@@ -231,19 +231,16 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
             effective_flop_ = willingness_ * initial_flop_per_dollar_ * cost_ratio_
             
             if not tai_created and print_diagnostic:
-                out_str = ('Year: {} - {} max log FLOP ({}) available - TAI takes {} log FLOP ({}) - ' +
-                           'log $ {} to buy TAI ({}) vs. willingness to pay log $ {} ({}) - {} log FLOP per $ ({}) (Effective 2023-logFLOP: {})')
+                out_str = ('Year: {} - {} max log FLOP available - TAI takes {} log FLOP - '
+                           'log 2023$USD {} to buy TAI vs. willingness to pay log $ {} - {} log FLOP '
+                           'per $ (Total FLOP {} vs. Effective 2023-logFLOP: {})')
                 print(out_str.format(y,
                                      np.round(math.log10(total_compute_), 1),
-                                     numerize(total_compute_),
                                      np.round(math.log10(flop_needed_), 1),
-                                     numerize(flop_needed_),
                                      np.round(math.log10(cost_of_tai_), 1),
-                                     numerize(cost_of_tai_),
                                      np.round(math.log10(willingness_), 1),
-                                     numerize(willingness_),
                                      np.round(math.log10(flop_per_dollar_), 1),
-                                     numerize(flop_per_dollar_),
+                                     np.round(math.log10(total_compute_), 1),
                                      np.round(math.log10(effective_flop_), 1)))
             
             if cost_of_tai_ > 10 ** 200:
@@ -386,9 +383,11 @@ def print_tai_arrival_stats(tai_years, variables):
     print('-')
     print('-')
     print('## TAI ARRIVAL DATE BY YEAR - COMPARE TO EPOCH 2023 BENCHMARK ##')
-    print('By EOY 2030 - this model {}% vs. Epoch 2023 20%'.format(bin_tai_yrs(hi=2030)))
-    print('By EOY 2050 - this model {}% vs. Epoch 2023 51%'.format(bin_tai_yrs(hi=2050)))
-    print('By EOY 2100 - this model {}% vs. Epoch 2023 61%'.format(bin_tai_yrs(hi=2100)))
+    print('By EOY 2026 - this model {}% vs. Epoch 2023 10%'.format(bin_tai_yrs(hi=2026)))
+    print('By EOY 2030 - this model {}% vs. Epoch 2023 28%'.format(bin_tai_yrs(hi=2030)))
+    print('By EOY 2036 - this model {}% vs. Epoch 2023 50%'.format(bin_tai_yrs(hi=2036)))
+    print('By EOY 2050 - this model {}% vs. Epoch 2023 69%'.format(bin_tai_yrs(hi=2050)))
+    print('By EOY 2100 - this model {}% vs. Epoch 2023 79%'.format(bin_tai_yrs(hi=2100)))
 
     tai_years_ = np.array([variables['MAX_YEAR'] + 1 if t > variables['MAX_YEAR'] else t for t in tai_years])
     count, bins_count = np.histogram(tai_years_, bins=(variables['MAX_YEAR'] - variables['CURRENT_YEAR']))
