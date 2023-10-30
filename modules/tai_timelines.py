@@ -388,6 +388,13 @@ def print_tai_arrival_stats(tai_years, variables):
     print('By EOY 2036 - this model {}% vs. Epoch 2023 50%'.format(bin_tai_yrs(hi=2036)))
     print('By EOY 2050 - this model {}% vs. Epoch 2023 69%'.format(bin_tai_yrs(hi=2050)))
     print('By EOY 2100 - this model {}% vs. Epoch 2023 79%'.format(bin_tai_yrs(hi=2100)))
+    
+    print('-')
+    print('-')
+    print('## TAI ARRIVAL DATE BY YEAR - COMPARE TO 2023 GJI SUPERFORECASTER BENCHMARK ##')
+    print('By EOY 2043 - this model {}% vs. GJI SF 2023 12%'.format(bin_tai_yrs(hi=2043)))
+    print('By EOY 2070 - this model {}% vs. GJI SF 2023 40%'.format(bin_tai_yrs(hi=2070)))
+    print('By EOY 2100 - this model {}% vs. GJI SF 2023 60%'.format(bin_tai_yrs(hi=2100)))
 
     tai_years_ = np.array([variables['MAX_YEAR'] + 1 if t > variables['MAX_YEAR'] else t for t in tai_years])
     count, bins_count = np.histogram(tai_years_, bins=(variables['MAX_YEAR'] - variables['CURRENT_YEAR']))
