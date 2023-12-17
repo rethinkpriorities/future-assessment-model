@@ -102,7 +102,7 @@ def possible_algo_reduction_fn(min_reduction, max_reduction, tai_flop_size):
 # TODO: Refactor
 def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possible_algo_reduction_,
                         initial_flop_per_dollar_, flop_halving_rate_, max_flop_per_dollar_, initial_pay_,
-                        gdp_growth_, max_gdp_frac_, willingness_ramp_, spend_doubling_time_, spend_doubling_time_2025_,
+                        gdp_growth_, max_gdp_frac_, willingness_ramp_, spend_doubling_time_, 
                         nonscaling_delay_, willingness_spend_horizon_, print_diagnostic, variables):
     if print_diagnostic:
         cost_of_tai_collector = []
@@ -115,21 +115,7 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
     initial_cost_of_tai_ = None
     plt.ioff()
     
-    if not tai_created and print_diagnostic:
-        print('It takes {} log FLOP (~{}) for transformative capabilities.'.format(np.round(tai_flop_size_, 1),
-                                                                                   numerize(10 ** tai_flop_size_)))
-        print('Every {} years algorithms get 2x better, with {} log reductions possible.'.format(np.round(algo_doubling_rate_, 1),
-                                                                                                 np.round(possible_algo_reduction_, 1)))
-        print(('FLOP start at a cost of {} log FLOP (~{}) per 2022$USD. Every {} years they get ' +
-               '2x cheaper, to a maximum of {} log FLOP (~{}) per 2022$USD.').format(np.round(math.log10(initial_flop_per_dollar_), 1),
-                                                                                     numerize(initial_flop_per_dollar_),
-                                                                                     np.round(flop_halving_rate_, 1),
-                                                                                     np.round(math.log10(max_flop_per_dollar_), 1),
-                                                                                     numerize(max_flop_per_dollar_)))
-        # Ensure 2023-2025 era doubling time is always faster
-        if spend_doubling_time_ > spend_doubling_time_2025_:
-            spend_doubling_time_2025_ = spend_doubling_time_
-
+    if not tai_created:
         # Cap initial pay at max GDP frac
         initial_pay_ = willingness_to_pay(initial_gdp=initial_gdp_,
                                           gdp_growth=gdp_growth_,
@@ -138,17 +124,18 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                                           max_gdp_frac=max_gdp_frac_,
                                           year=0)
 
-        if spend_doubling_time_2025_ != spend_doubling_time_:
-            print(('We are initially willing to pay {} log 2022$USD (~{}). This doubles every {} years until 2025, and then doubles every {} years to a max of {}% of GDP (initially ~{} 2022$USD). ' +
-                   'GDP grows at a rate of {}x per year.').format(np.round(math.log10(initial_pay_), 1),
-                                                                  numerize(initial_pay_),
-                                                                  np.round(spend_doubling_time_2025_, 1),
-                                                                  np.round(spend_doubling_time_, 1),
-                                                                  np.round(max_gdp_frac_ * 100, 6),
-                                                                  numerize(max_gdp_frac_ * initial_gdp_),
-                                                                  np.round(gdp_growth_, 3)))
-        else:
-            print(('We are initially willing to pay {} log 2022$USD (~{}). This doubles every {} years to a max of {}% of GDP (initially ~{} 2022$USD). ' +
+        if print_diagnostic:
+            print('It takes {} log FLOP (~{}) for transformative capabilities.'.format(np.round(tai_flop_size_, 1),
+                                                                                       numerize(10 ** tai_flop_size_)))
+            print('Every {} years algorithms get 2x better, with {} log reductions possible.'.format(np.round(algo_doubling_rate_, 1),
+                                                                                                     np.round(possible_algo_reduction_, 1)))
+            print(('FLOP start at a cost of {} log FLOP (~{}) per 2023$USD. Every {} years they get ' +
+                   '2x cheaper, to a maximum of {} log FLOP (~{}) per 2023$USD.').format(np.round(math.log10(initial_flop_per_dollar_), 1),
+                                                                                         numerize(initial_flop_per_dollar_),
+                                                                                         np.round(flop_halving_rate_, 1),
+                                                                                         np.round(math.log10(max_flop_per_dollar_), 1),
+                                                                                         numerize(max_flop_per_dollar_)))
+            print(('We are initially willing to pay {} log 2023$USD (~{}). This doubles every {} year to a max of {}% of GDP (initially ~{} 2023$USD). ' +
                    'GDP grows at a rate of {}x per year.').format(np.round(math.log10(initial_pay_), 1),
                                                                   numerize(initial_pay_),
                                                                   np.round(spend_doubling_time_, 1),
@@ -156,12 +143,12 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                                                                   numerize(max_gdp_frac_ * initial_gdp_),
                                                                   np.round(gdp_growth_, 3)))
 
-        if willingness_ramp_ < 1:
-            print('In this simulation, if we are {}% of the way to paying for TAI, we will ramp to paying for TAI.'.format(np.round(willingness_ramp_ * 100)))
+            if willingness_ramp_ < 1:
+                print('In this simulation, if we are {}% of the way to paying for TAI, we will ramp to paying for TAI.'.format(np.round(willingness_ramp_ * 100)))
 
-        if willingness_spend_horizon_ > 1:
-            print('We are willing to spend over {} years to make TAI'.format(willingness_spend_horizon_))
-        print('---')
+            if willingness_spend_horizon_ > 1:
+                print('We are willing to spend over {} years to make TAI'.format(willingness_spend_horizon_))
+            print('---')
     
     effective_flop_ = 0
     for y in years:
@@ -191,27 +178,12 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
             if variables['CURRENT_YEAR'] >= 2025:
                 raise ValueError('CURRENT_YEAR >= 2025 not currently supported')
 
-            if y <= 2025 or spend_doubling_time_2025_ == spend_doubling_time_:
-                willingness_ = willingness_to_pay(initial_gdp=initial_gdp_,
-                                                  gdp_growth=gdp_growth_,
-                                                  initial_pay=initial_pay_,
-                                                  spend_doubling_time=spend_doubling_time_2025_,
-                                                  max_gdp_frac=max_gdp_frac_,
-                                                  year=y - variables['CURRENT_YEAR'])
-            else:
-                willingness_2025_ = willingness_to_pay(initial_gdp=initial_gdp_,
-                                                       gdp_growth=gdp_growth_,
-                                                       initial_pay=initial_pay_,
-                                                       spend_doubling_time=spend_doubling_time_2025_,
-                                                       max_gdp_frac=max_gdp_frac_,
-                                                       year=2025 - variables['CURRENT_YEAR'])
-                gdp_2025_ = 10 ** gdp(initial_gdp=np.log10(initial_gdp_), gdp_growth=gdp_growth_, year=2025 - variables['CURRENT_YEAR'])
-                willingness_ = willingness_to_pay(initial_gdp=gdp_2025_,
-                                                  gdp_growth=gdp_growth_,
-                                                  initial_pay=willingness_2025_,
-                                                  spend_doubling_time=spend_doubling_time_,
-                                                  max_gdp_frac=max_gdp_frac_,
-                                                  year=y - 2025)
+            willingness_ = willingness_to_pay(initial_gdp=initial_gdp_,
+                                              gdp_growth=gdp_growth_,
+                                              initial_pay=initial_pay_,
+                                              spend_doubling_time=spend_doubling_time_,
+                                              max_gdp_frac=max_gdp_frac_,
+                                              year=y - variables['CURRENT_YEAR'])
             
             if not tai_created and print_diagnostic:
                 cost_of_tai_collector.append(cost_of_tai_)
@@ -453,9 +425,8 @@ def define_tai_timeline_event(variables, verbose=False):
     else:
         willingness_ramp_ = 1
     
-    initial_gdp_ = variables['initial_gdp']
+    initial_gdp_ = sq.sample(variables['initial_gdp'])
     spend_doubling_time_ = sq.sample(variables['spend_doubling_time'])
-    spend_doubling_time_2025_ = sq.sample(variables['2025_spend_doubling_time']) if variables.get('2025_spend_doubling_time') else spend_doubling_time_
     nonscaling_delay_ = variables.get('nonscaling_delay')
     willingness_spend_horizon_ = int(sq.sample(variables.get('willingness_spend_horizon', 1)))
     
@@ -471,7 +442,6 @@ def define_tai_timeline_event(variables, verbose=False):
                                max_gdp_frac_=max_gdp_frac_,
                                willingness_ramp_=willingness_ramp_,
                                spend_doubling_time_=spend_doubling_time_,
-                               spend_doubling_time_2025_=spend_doubling_time_2025_,
                                nonscaling_delay_=nonscaling_delay_,
                                willingness_spend_horizon_=willingness_spend_horizon_,
                                variables=variables,
@@ -591,7 +561,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     plt.show()
 
     for y in years[:10] + years[10::10]:
-        outstr = 'Year: {} - GDP log 2022$USD {} (~{}) 90% CI {} (~{}) - {} (~{})'
+        outstr = 'Year: {} - GDP log 2023$USD {} (~{}) 90% CI {} (~{}) - {} (~{})'
         print(outstr.format(y,
                             np.round(np.log10(gdp_50[y - variables['CURRENT_YEAR']]), 1),
                             numerize(gdp_50[y - variables['CURRENT_YEAR']]),
@@ -626,11 +596,11 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     plt.plot(years, np.log10(willingness_10), linestyle='dashed', color='black')
     plt.plot(years, np.log10(willingness_90), linestyle='dashed', color='black')
     plt.plot(years, np.log10(willingness_50), color='black')
-    plt.ylabel('log 2022$USD/yr willing to spend on TAI')
+    plt.ylabel('log 2023$USD/yr willing to spend on TAI')
     plt.show()
 
     for y in years[:10] + years[10::10]:
-        outstr = 'Year: {} - willingness log 2022$USD per year {} (~{}) 90% CI {} (~{}) - {} (~{})'
+        outstr = 'Year: {} - willingness log 2023$USD per year {} (~{}) 90% CI {} (~{}) - {} (~{})'
         print(outstr.format(y,
                             np.round(np.log10(willingness_50[y - variables['CURRENT_YEAR']]), 1),
                             numerize(willingness_50[y - variables['CURRENT_YEAR']]),
@@ -707,7 +677,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     plt.show()
 
     for y in years[:10] + years[10::10]:
-        outstr = 'Year: {} - log FLOP per 2022$1USD {} (~{}) 90% CI {} (~{}) - {} (~{})'
+        outstr = 'Year: {} - log FLOP per 2023$1USD {} (~{}) 90% CI {} (~{}) - {} (~{})'
         print(outstr.format(y,
                             np.round(np.log10(flop_per_dollar_50[y - variables['CURRENT_YEAR']]), 1),
                             numerize(flop_per_dollar_50[y - variables['CURRENT_YEAR']]),
@@ -827,7 +797,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     plt.show()
 
     for y in years[:10] + years[10::10]:
-        outstr = 'Year: {} - {} log 2022$USD to buy TAI (~{}) 90% CI {} (~{}) - {} (~{})'
+        outstr = 'Year: {} - {} log 2023$USD to buy TAI (~{}) 90% CI {} (~{}) - {} (~{})'
         print(outstr.format(y,
                             np.round(np.log10(cost_of_tai_50[y - variables['CURRENT_YEAR']]), 1),
                             numerize(cost_of_tai_50[y - variables['CURRENT_YEAR']]),
@@ -985,7 +955,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
             tai_years = [y for y in tai_years if (y['tai_year'] >= low) and (y['tai_year'] <= hi)]
         return int(round(np.mean([y['delay'] > 0 for y in tai_years]) * 100))
 
-    print('If TAI compute level achieved in 2023-2026... {}% chance of TAI nonscaling delay'.format(bin_tai_delay_by_year(tai_years, 2023, 2026)))
+    print('If TAI compute level achieved in 2024-2026... {}% chance of TAI nonscaling delay'.format(bin_tai_delay_by_year(tai_years, 2024, 2026)))
     print('If TAI compute level achieved in 2027-2030... {}% chance of TAI nonscaling delay'.format(bin_tai_delay_by_year(tai_years, 2027, 2030)))
     print('If TAI compute level achieved in 2031-2035... {}% chance of TAI nonscaling delay'.format(bin_tai_delay_by_year(tai_years, 2031, 2035)))
     print('If TAI compute level achieved in 2036-2040... {}% chance of TAI nonscaling delay'.format(bin_tai_delay_by_year(tai_years, 2036, 2040)))
