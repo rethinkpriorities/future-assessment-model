@@ -519,6 +519,9 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
         initial_pay_s = sq.sample(sq.discrete(initial_pay_s), n=1000)
     initial_pay_p = print_graph(initial_pay_s, 'INITIAL PAY')
 
+    initial_gdp_s = sq.sample(variables['initial_gdp'], n=1000)
+    initial_gdp_p = print_graph(initial_gdp_s, label='INITIAL GDP', digits=2)
+
     gdp_growth_s = sq.sample(variables['gdp_growth'], n=1000)
     gdp_growth_p = print_graph(gdp_growth_s, label='GDP GROWTH', digits=2)
 
@@ -545,13 +548,13 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     print('-')
     print('-')
     print('## GDP Over Time ##')
-    gdp_50 = np.array([gdp(initial_gdp=variables['initial_gdp'],
+    gdp_50 = np.array([gdp(initial_gdp=initial_gdp_p[50],
                            gdp_growth=gdp_growth_p[50],
                            year=(y - variables['CURRENT_YEAR'])) for y in years])
-    gdp_10 = np.array([gdp(initial_gdp=variables['initial_gdp'],
+    gdp_10 = np.array([gdp(initial_gdp=initial_gdp_p[10],
                            gdp_growth=gdp_growth_p[10],
                            year=(y - variables['CURRENT_YEAR'])) for y in years])
-    gdp_90 = np.array([gdp(initial_gdp=variables['initial_gdp'],
+    gdp_90 = np.array([gdp(initial_gdp=initial_gdp_p[90],
                            gdp_growth=gdp_growth_p[90],
                            year=(y - variables['CURRENT_YEAR'])) for y in years])
     plt.plot(years, np.log10(gdp_10), linestyle='dashed', color='black')
@@ -574,19 +577,19 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     print('-')
     print('-')
     print('## Willingness to Pay Over Time ##')
-    willingness_50 = np.array([willingness_to_pay(initial_gdp=variables['initial_gdp'],
+    willingness_50 = np.array([willingness_to_pay(initial_gdp=initial_gdp_p[50],
                                                   gdp_growth=gdp_growth_p[50],
                                                   initial_pay=10 ** initial_pay_p[50],
                                                   spend_doubling_time=spend_doubling_time_p[50],
                                                   max_gdp_frac=max_gdp_frac_p[50],
                                                   year=(y - variables['CURRENT_YEAR'])) for y in years])
-    willingness_10 = np.array([willingness_to_pay(initial_gdp=variables['initial_gdp'],
+    willingness_10 = np.array([willingness_to_pay(initial_gdp=initial_gdp_p[10],
                                                   gdp_growth=gdp_growth_p[10],
                                                   initial_pay=10 ** initial_pay_p[10],
                                                   spend_doubling_time=spend_doubling_time_p[10],
                                                   max_gdp_frac=max_gdp_frac_p[10],
                                                   year=(y - variables['CURRENT_YEAR'])) for y in years])
-    willingness_90 = np.array([willingness_to_pay(initial_gdp=variables['initial_gdp'],
+    willingness_90 = np.array([willingness_to_pay(initial_gdp=initial_gdp_p[90],
                                                   gdp_growth=gdp_growth_p[90],
                                                   initial_pay=10 ** initial_pay_p[90],
                                                   spend_doubling_time=spend_doubling_time_p[90],
@@ -810,7 +813,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     print('-')
     print('-')
     print('## Actual FLOP at Max Spend ##')
-    flop_at_max_50 = np.array([flop_at_max(initial_gdp=variables['initial_gdp'],
+    flop_at_max_50 = np.array([flop_at_max(initial_gdp=initial_gdp_p[50],
                                            gdp_growth=gdp_growth_p[50],
                                            initial_pay=10 ** initial_pay_p[50],
                                            spend_doubling_time=spend_doubling_time_p[50],
@@ -819,7 +822,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                            max_flop_per_dollar=10 ** max_flop_per_dollar_p[50],
                                            flop_halving_rate=flop_halving_rate_p[50],
                                            year=(y - variables['CURRENT_YEAR'])) for y in years])
-    flop_at_max_10 = np.array([flop_at_max(initial_gdp=variables['initial_gdp'],
+    flop_at_max_10 = np.array([flop_at_max(initial_gdp=initial_gdp_p[10],
                                            gdp_growth=gdp_growth_p[10],
                                            initial_pay=10 ** initial_pay_p[10],
                                            spend_doubling_time=spend_doubling_time_p[10],
@@ -828,7 +831,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                            max_flop_per_dollar=10 ** max_flop_per_dollar_p[10],
                                            flop_halving_rate=flop_halving_rate_p[10],
                                            year=(y - variables['CURRENT_YEAR'])) for y in years])
-    flop_at_max_90 = np.array([flop_at_max(initial_gdp=variables['initial_gdp'],
+    flop_at_max_90 = np.array([flop_at_max(initial_gdp=initial_gdp_p[90],
                                            gdp_growth=gdp_growth_p[90],
                                            initial_pay=10 ** initial_pay_p[90],
                                            spend_doubling_time=spend_doubling_time_p[90],
@@ -858,7 +861,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
     print('-')
     print('-')
     print('## Effective 2023-FLOP at Max Spend (given algorithmic progress and decline in $/FLOP) ##')
-    effective_flop_at_max_50 = np.array([effective_flop_at_max(initial_gdp=variables['initial_gdp'],
+    effective_flop_at_max_50 = np.array([effective_flop_at_max(initial_gdp=initial_gdp_p[50],
                                                                gdp_growth=gdp_growth_p[50],
                                                                initial_pay=10 ** initial_pay_p[50],
                                                                spend_doubling_time=spend_doubling_time_p[50],
@@ -874,7 +877,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                                                                              algo_doubling_rate_max_p[50],
                                                                                              initial_flop_p[50]),
                                                                year=(y - variables['CURRENT_YEAR'])) for y in years])
-    effective_flop_at_max_10 = np.array([effective_flop_at_max(initial_gdp=variables['initial_gdp'],
+    effective_flop_at_max_10 = np.array([effective_flop_at_max(initial_gdp=initial_gdp_p[10],
                                                                gdp_growth=gdp_growth_p[10],
                                                                initial_pay=10 ** initial_pay_p[10],
                                                                spend_doubling_time=spend_doubling_time_p[10],
@@ -890,7 +893,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                                                                                              algo_doubling_rate_max_p[10],
                                                                                              initial_flop_p[10]),
                                                                year=(y - variables['CURRENT_YEAR'])) for y in years])
-    effective_flop_at_max_90 = np.array([effective_flop_at_max(initial_gdp=variables['initial_gdp'],
+    effective_flop_at_max_90 = np.array([effective_flop_at_max(initial_gdp=initial_gdp_p[90],
                                                                gdp_growth=gdp_growth_p[90],
                                                                initial_pay=10 ** initial_pay_p[90],
                                                                spend_doubling_time=spend_doubling_time_p[90],
