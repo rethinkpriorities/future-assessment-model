@@ -298,3 +298,45 @@ def p_event(variables, label, verbosity):
     if verbosity > 1:
         print('-- sampling {} p={} outcome={}'.format(label, p, outcome))
     return outcome
+
+
+
+
+def plot_model_versus_estimate(model_name, model_samples, actual_spend):
+    print('## Model predicts {} spend will be ##'.format(model_name))
+    pprint(dict([(i[0], numerize(10 ** i[1])) for i in sq.get_percentiles(model_samples).items()]))
+    print('-')
+    
+    estimate_cost_samples = sq.dist_fn(sq.lognorm(actual_spend/4, actual_spend*4), fn=np.log10) @ (100*K)
+    print('## Actual {} estimated to be ##'.format(model_name))
+    pprint(dict([(i[0], numerize(10 ** i[1])) for i in sq.get_percentiles(estimate_cost_samples).items()]))
+    print('-')
+    
+    print('Actual spend on {} (${}M) is at the {}th percentile of the model'.format(model_name,
+                                                                                    round(actual_spend / M, 1),
+                                                                                    round(np.mean([s <= np.log10(actual_spend) for s in model_samples]) * 100, 1)))
+    print('-')
+    
+    plt.figure(figsize=(10,8))
+    plt.hist(model_samples, bins=200, label='{} Prediction from Model'.format(model_name), alpha=0.6, color='blue')
+    plt.axvline(np.mean(model_samples), label='{} Prediction from Model (mean)'.format(model_name), color='blue')
+    plt.hist(estimate_cost_samples, bins=200, label='{} Estimates of cost'.format(model_name), alpha=0.6, color='orange')
+    plt.axvline(np.mean(estimate_cost_samples), label='{} Prediction from Model (mean)'.format(model_name), color='orange')
+    plt.xlabel('log $ spent')
+    plt.legend()
+    plt.show()
+    return None
+
+
+def show_model_forecast(samples):
+    mean_ci = sq.get_mean_and_ci(samples, credibility=80)
+    print('${} (80%CI: ${} to ${})'.format(numerize(10 ** mean_ci['mean']),
+                                           numerize(10 ** mean_ci['ci_low']),
+                                           numerize(10 ** mean_ci['ci_high'])))
+    print('-')
+    pprint(dict([(i[0], numerize(10 ** i[1])) for i in sq.get_percentiles(samples).items()]))
+    print('-')
+    plt.hist(samples, bins=200)
+    plt.xlabel('log $ spent')
+    plt.show()
+    return None
