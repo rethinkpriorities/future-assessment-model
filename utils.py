@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import squigglepy as sq
 
 
-def numerize(num):
+def numerize(num, digits=1):
     scales = {'thousand': 1000,
               'million': 10 ** 6,
               'billion': 10 ** 9,
@@ -26,7 +26,10 @@ def numerize(num):
 
     for scale_name, scale_value in scales.items():
         if num < scale_value * 1000:
-            return str(int(round(num / scale_value))) + ' ' + scale_name
+            if digits == 0:
+                return str(int(round(num / scale_value))) + ' ' + scale_name
+            else:
+                return str(round(num / scale_value, digits)) + ' ' + scale_name
 
     return str(numerize(num / 10 ** 33)) + ' decillion'
 
