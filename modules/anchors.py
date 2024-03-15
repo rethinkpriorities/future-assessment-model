@@ -3,6 +3,8 @@ import numpy as np
 
 from pprint import pprint
 
+from utils import compute
+
 
 def get_anchor_gpt_benchmark_pct(anchor, target):
     out = round(np.mean([a <= target for a in anchor]) * 100, 1)
@@ -11,10 +13,10 @@ def get_anchor_gpt_benchmark_pct(anchor, target):
 
 def compare_anchor_to_gpt(anchor):
     print('-')
-    print('GPT2 (~21 log FLOP) can do it: {}'.format(get_anchor_gpt_benchmark_pct(anchor, 21)))
-    print('GPT3 (~23 log FLOP) can do it: {}'.format(get_anchor_gpt_benchmark_pct(anchor, 23)))
-    print('GPT4 (~25 log FLOP) can do it: {}'.format(get_anchor_gpt_benchmark_pct(anchor, 25)))
-    print('GPT5 (~27 log FLOP) can do it: {}'.format(get_anchor_gpt_benchmark_pct(anchor, 27)))
+    print('GPT2 can do it: {}'.format(get_anchor_gpt_benchmark_pct(anchor, compute['GPT-2'])))
+    print('GPT3 can do it: {}'.format(get_anchor_gpt_benchmark_pct(anchor, compute['GPT-3'])))
+    print('GPT4 can do it: {}'.format(get_anchor_gpt_benchmark_pct(anchor, compute['GPT-4'])))
+    print('100x GPT4 can do it: {}'.format(get_anchor_gpt_benchmark_pct(anchor, compute['GPT-4'] + 2)))
 
 
 def tai_log_flop_needs(brain, efficiency=0, transformative_vs_human=0, horizon_length=0, scaling_exponent=0,
@@ -92,7 +94,7 @@ def plot_anchors(anchor1=None, anchor2=None, anchor3=None, anchor4=None, anchor5
         raise ValueError('{} defined without defining {}'.foramt(label6, label5))
 
     anchors = [anchor1, anchor2, anchor3, anchor4, anchor5, anchor6]
-    anchors = [a for a in anchors if isinstance(a, np.ndarray) or isinstance(a, float)]
+    anchors = [a for a in anchors if isinstance(a, np.ndarray)]
     if len(anchors) > 1:
         lenx = len(anchors[0])
         if not all([len(a) == lenx for a in anchors]):
