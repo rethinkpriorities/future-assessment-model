@@ -22,6 +22,7 @@ def define_event(variables, verbosity=0):
         start1 = time.time()
 
     vars_ = deepcopy(variables)
+    vars_['aligned_by_default'] = p_event(variables, 'p_tai_aligned_by_default', verbosity)
     state = {'category': 'boring', 'tai': False, 'tai_year': None, 'tai_type': None,
              'tai_alignment_state': None, 'nano': False, 'wars': [], 'war': False,
              'war_start_year': None, 'war_end_year': None, 'russia_nuke_first': False,

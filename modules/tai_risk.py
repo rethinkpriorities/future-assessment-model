@@ -73,20 +73,18 @@ def attempt_to_avert_misaligned_tai(state, variables, y, verbosity, intentional_
 
 def tai_alignment(y, state, variables, verbosity):
     # TODO: Alignment chance should also depend a bit on who gets there first?
-    aligned_by_default = p_event(variables, 'p_tai_aligned_by_default', verbosity)
-    fully_aligned_by_default = aligned_by_default and p_event(variables, 'p_subtle_alignment_solved_if_aligned_by_default', verbosity)
-
     solved_alignment = p_event(variables['p_alignment_solved'](y - variables['CURRENT_YEAR'],
                                                                first_attempt=state['tai_type'] is None),
                                'p_alignment_solved',
                                verbosity)
     solved_subtle_alignment = p_event(variables, 'p_subtle_alignment_solved', verbosity) if solved_alignment else False
+    fully_aligned_by_default = variables['aligned_by_default'] and solved_subtle_alignment
 
-    if aligned_by_default and fully_aligned_by_default:
+    if fully_aligned_by_default:
         state['tai_alignment_state'] = 'fully_aligned_by_default'
     elif solved_alignment and solved_subtle_alignment:
         state['tai_alignment_state'] = 'fully_aligned_by_work'
-    elif aligned_by_default and not fully_aligned_by_default and solved_alignment and solved_subtle_alignment:
+    elif variables['aligned_by_default'] and not fully_aligned_by_default and solved_alignment and solved_subtle_alignment:
         state['tai_alignment_state'] = 'fully_aligned_by_work'
     elif solved_alignment and not solved_subtle_alignment:
         state['tai_alignment_state'] = 'subtly_misaligned'
