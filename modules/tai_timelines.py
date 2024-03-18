@@ -32,7 +32,7 @@ def plot_tai(plt, years, cost_of_tai_collector, willingness_collector):
     for year, value in zip(years[:len(willingness)], willingness):
         if year % increment == 0:
             plt.scatter(year, value, color='blue', s=30)
-            plt.text(year, value + offset, f'{value:.1f}', fontsize=8, ha='center')
+            plt.text(year, value - offset * 2, f'{value:.1f}', fontsize=8, ha='center')
 
     plt.ylabel('log $')
     return plt
