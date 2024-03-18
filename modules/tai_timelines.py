@@ -193,16 +193,20 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                                                                                          numerize(10 ** tai_flop_size_)))
             print('* Every {} years algorithms get 2x better, with {} log reductions possible.'.format(np.round(algo_doubling_rate_, 1),
                                                                                                        np.round(possible_algo_reduction_, 1)))
-            print('* FLOP start at a cost of {} log FLOP (~{}) per 2024$USD.'.format(np.round(math.log10(initial_flop_per_dollar_), 1),
-                                                                                     numerize(initial_flop_per_dollar_)))
-            print('* Every {} years they get 2x cheaper, to a maximum of {} log FLOP (~{}) per 2024$USD.'.format(np.round(flop_halving_rate_, 1),
-                                                                                                                 np.round(math.log10(max_flop_per_dollar_), 1),
-                                                                                                                 numerize(max_flop_per_dollar_)))
-            print('* We are initially willing to pay {} log 2024$USD (~{}).'.format(np.round(math.log10(initial_pay_), 1),
-                                                                                    numerize(initial_pay_)))
-            print('* This doubles every {} year to a max of {}% of GDP (initially ~{} 2024$USD).'.format(np.round(spend_doubling_time_, 1),
-                                                                                                         np.round(max_gdp_frac_ * 100, 6),
-                                                                                                         numerize(max_gdp_frac_ * initial_gdp_)))
+            print('* FLOP start at a cost of {} log FLOP (~{}) per {}$USD.'.format(np.round(math.log10(initial_flop_per_dollar_), 1),
+                                                                                   numerize(initial_flop_per_dollar_),
+                                                                                   variables['CURRENT_YEAR']))
+            print('* Every {} years they get 2x cheaper, to a maximum of {} log FLOP (~{}) per {}$USD.'.format(np.round(flop_halving_rate_, 1),
+                                                                                                               np.round(math.log10(max_flop_per_dollar_), 1),
+                                                                                                               numerize(max_flop_per_dollar_),
+                                                                                                               variables['CURRENT_YEAR']))
+            print('* We are initially willing to pay {} log {}$USD (~{}).'.format(np.round(math.log10(initial_pay_), 1),
+                                                                                  variables['CURRENT_YEAR'],
+                                                                                  numerize(initial_pay_)))
+            print('* This doubles every {} year to a max of {}% of GDP (initially ~{} {}$USD).'.format(np.round(spend_doubling_time_, 1),
+                                                                                                       np.round(max_gdp_frac_ * 100, 6),
+                                                                                                       numerize(max_gdp_frac_ * initial_gdp_),
+                                                                                                       variables['CURRENT_YEAR']))
             print('* GDP grows at a rate of {}x per year.'.format(np.round(gdp_growth_, 3)))
 
             if willingness_ramp_ < 1:
@@ -237,9 +241,6 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
 
             cost_ratio_ = initial_cost_of_tai_ // cost_of_tai_ if overflow else initial_cost_of_tai_ / cost_of_tai_
 
-            if variables['CURRENT_YEAR'] >= 2025:
-                raise ValueError('CURRENT_YEAR >= 2025 not currently supported')
-
             willingness_ = willingness_to_pay(initial_gdp=initial_gdp_,
                                               gdp_growth=gdp_growth_,
                                               initial_pay=initial_pay_,
@@ -265,13 +266,15 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
             effective_flop_ = willingness_ * initial_flop_per_dollar_ * cost_ratio_
             
             if not tai_created and print_diagnostic:
-                out_str = '{} - TAI takes {} logFLOP which costs {} log 2024$USD to buy vs. WTP at {} (buys {} log FLOP or {} 2024-log-eFLOP)'
+                out_str = '{} - TAI takes {} logFLOP which costs {} log {}$USD to buy vs. WTP at {} (buys {} log FLOP or {} {}-log-eFLOP)'
                 print(out_str.format(y,
                                      np.round(math.log10(flop_needed_), 1),
                                      np.round(math.log10(cost_of_tai_), 1),
+                                     variables['CURRENT_YEAR'],
                                      np.round(math.log10(willingness_), 1),
                                      np.round(math.log10(total_compute_), 1),
-                                     np.round(math.log10(effective_flop_), 1)))
+                                     np.round(math.log10(effective_flop_), 1),
+                                     variables['CURRENT_YEAR']))
             
             if cost_of_tai_ > 10 ** 200:
                 spend_tai_years = int(cost_of_tai_) // int(willingness_)
@@ -291,7 +294,7 @@ def run_tai_model_round(initial_gdp_, tai_flop_size_, algo_doubling_rate_, possi
                 if not is_nonscaling_issue or nonscaling_countdown <= 0.1:
                     if print_diagnostic:
                         print('--- /!\ TAI CREATED in {}'.format(y))
-                        if y > 2024:
+                        if y > CURRENT_YEAR:
                             print('')
                             plot_tai(plt, years, cost_of_tai_collector, willingness_collector).show()
                     tai_created = True
@@ -355,44 +358,29 @@ def print_tai_arrival_stats(tai_years, variables):
         return round(r * 100, 1)
 
 
+    year_pairs = [[variables['CURRENT_YEAR'] + 1, variables['CURRENT_YEAR'] + 2],
+                  [variables['CURRENT_YEAR'] + 3, variables['CURRENT_YEAR'] + 5],
+                  [2030, 2034],
+                  [2035, 2039],
+                  [2040, 2049],
+                  [2050, 2059],
+                  [2060, 2069],
+                  [2070, 2079],
+                  [2080, 2089],
+                  [2090, 2099],
+                  [2100, 2109],
+                  [2110, 2119]]
+    year_pairs = [y for y in year_pairs if y[0] < variables['MAX_YEAR'] and y[1] < variables['MAX_YEAR']]
     print('This year: {}%'.format(bin_tai_yrs(hi=variables['CURRENT_YEAR'])))
-    print('2025-2026: {}%'.format(bin_tai_yrs(2025, 2026)))
-    print('2027-2029: {}%'.format(bin_tai_yrs(2027, 2029)))
-    print('2030-2034: {}%'.format(bin_tai_yrs(2030, 2034)))
-    print('2035-2039: {}%'.format(bin_tai_yrs(2035, 2039)))
-    print('2040-2049: {}%'.format(bin_tai_yrs(2040, 2049)))
-    print('2050-2059: {}%'.format(bin_tai_yrs(2050, 2059)))
-    print('2060-2069: {}%'.format(bin_tai_yrs(2060, 2069)))
-    print('2070-2079: {}%'.format(bin_tai_yrs(2070, 2079)))
-    print('2080-2089: {}%'.format(bin_tai_yrs(2080, 2089)))
-    print('2090-2099: {}%'.format(bin_tai_yrs(2090, 2099)))
-    print('2100-2109: {}%'.format(bin_tai_yrs(2100, 2109)))
-    print('2110-2119: {}%'.format(bin_tai_yrs(2110, 2119)))
-    print('>2120: {}%'.format(bin_tai_yrs(low=2120)))
+    for y in year_pairs:
+        print('{}-{}: {}%'.format(y[0], y[1], bin_tai_yrs(y[0], y[1])))
+    print('>{}: {}%'.format(variables['MAX_YEAR'], bin_tai_yrs(low=variables['MAX_YEAR'])))
     print('')
     print('')
 
     print('## TAI ARRIVAL DATE BY YEAR ##')
-    print('By EOY 2024: {}%'.format(bin_tai_yrs(hi=2024)))
-    print('By EOY 2025: {}%'.format(bin_tai_yrs(hi=2025)))
-    print('By EOY 2026: {}%'.format(bin_tai_yrs(hi=2026)))
-    print('By EOY 2027: {}%'.format(bin_tai_yrs(hi=2027)))
-    print('By EOY 2028: {}%'.format(bin_tai_yrs(hi=2028)))
-    print('By EOY 2029: {}% (within 5 years)'.format(bin_tai_yrs(hi=2029)))
-    print('By EOY 2030: {}%'.format(bin_tai_yrs(hi=2030)))
-    print('By EOY 2031: {}%'.format(bin_tai_yrs(hi=2031)))
-    print('By EOY 2032: {}%'.format(bin_tai_yrs(hi=2032)))
-    print('By EOY 2033: {}%'.format(bin_tai_yrs(hi=2033)))
-    print('By EOY 2034: {}% (within 10yrs)'.format(bin_tai_yrs(hi=2034)))
-    print('By EOY 2040: {}%'.format(bin_tai_yrs(hi=2040)))
-    print('By EOY 2049: {}% (within 25yrs)'.format(bin_tai_yrs(hi=2049)))
-    print('By EOY 2050: {}%'.format(bin_tai_yrs(hi=2050)))
-    print('By EOY 2060: {}%'.format(bin_tai_yrs(hi=2060)))
-    print('By EOY 2070: {}%'.format(bin_tai_yrs(hi=2070)))
-    print('By EOY 2074: {}% (within 50yrs)'.format(bin_tai_yrs(hi=2074)))
-    print('By EOY 2100: {}%'.format(bin_tai_yrs(hi=2100)))
-    print('By EOY 2122: {}%'.format(bin_tai_yrs(hi=2122)))
-    print('')
+    for y in list(range(variables['CURRENT_YEAR'], variables['CURRENT_YEAR'] + 20)) + list(range(variables['CURRENT_YEAR'] + 25, variables['MAX_YEAR'], 5)):
+        print('By EOY {}: {}%'.format(y, bin_tai_yrs(hi=y)))
     print('')
     
     print('## TAI ARRIVAL DATE BY YEAR - COMPARE TO AJEYA 2020 BENCHMARK ##')

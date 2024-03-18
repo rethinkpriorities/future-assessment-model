@@ -5,6 +5,15 @@ import matplotlib.pyplot as plt
 import squigglepy as sq
 
 
+thirty_years_in_seconds = 30 * 365 * 24 * 60 * 60
+
+compute = {'GPT-2': 21.6,
+           'GPT-3': 23.5,
+           'GPT-4': 25.3}
+
+CURRENT_YEAR = 2024
+
+
 def numerize(num, digits=1):
     scales = {'thousand': 1000,
               'million': 10 ** 6,
@@ -343,11 +352,3 @@ def show_model_forecast(samples):
     plt.xlabel('log $ spent')
     plt.show()
     return None
-
-
-thirty_years_in_seconds = 30 * 365 * 24 * 60 * 60
-
-compute = {'GPT-2': 21.6,
-           'GPT-3': 23.5,
-           'GPT-4': 25.3}
-
