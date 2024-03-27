@@ -11,7 +11,7 @@ compute = {'GPT-2': 21.6,
            'GPT-3': 23.5,
            'GPT-4': 25.3}
 
-CURRENT_YEAR = 2024
+CURRENT_YEAR = 2025
 
 
 def numerize(num, digits=1):
@@ -341,14 +341,33 @@ def plot_model_versus_estimate(model_name, model_samples, actual_spend):
 
 
 def show_model_forecast(samples):
+    print('## SPEND ESTIMATE ##')
+    print('')
     mean_ci = sq.get_mean_and_ci(samples, credibility=80)
     print('${} (80%CI: ${} to ${})'.format(numerize(10 ** mean_ci['mean']),
                                            numerize(10 ** mean_ci['ci_low']),
                                            numerize(10 ** mean_ci['ci_high'])))
-    print('-')
+    print('')
     pprint(dict([(i[0], numerize(10 ** i[1])) for i in sq.get_percentiles(samples).items()]))
-    print('-')
+    print('')
     plt.hist(samples, bins=200)
     plt.xlabel('log $ spent')
+    plt.show()
+    print('')
+    print('')
+
+    print('## FLOP ESTIMATE ##')
+    print('')
+    log_flop_per_dollar = sq.norm(18.2, 19.4)
+    flop_samples = samples + (log_flop_per_dollar @ len(samples))
+    mean_ci = sq.get_mean_and_ci(flop_samples, credibility=80)
+    print('{} log FLOP (80%CI: {} to {} log FLOP)'.format(round(mean_ci['mean'], 2),
+                                                          round(mean_ci['ci_low'], 2),
+                                                          round(mean_ci['ci_high'], 2)))
+    print('')
+    pprint(dict([(i[0], round(i[1], 2)) for i in sq.get_percentiles(flop_samples).items()]))
+    print('')
+    plt.hist(flop_samples, bins=200)
+    plt.xlabel('log FLOP expected from model')
     plt.show()
     return None
