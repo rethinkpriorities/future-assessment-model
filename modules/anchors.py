@@ -16,7 +16,9 @@ def compare_anchor_to_gpt(anchor):
     print('GPT2 can do it: {}'.format(get_anchor_gpt_benchmark_pct(anchor, compute['GPT-2'])))
     print('GPT3 can do it: {}'.format(get_anchor_gpt_benchmark_pct(anchor, compute['GPT-3'])))
     print('GPT4 can do it: {}'.format(get_anchor_gpt_benchmark_pct(anchor, compute['GPT-4'])))
+    print('10x GPT4 can do it: {}'.format(get_anchor_gpt_benchmark_pct(anchor, compute['GPT-4'] + 1)))
     print('100x GPT4 can do it: {}'.format(get_anchor_gpt_benchmark_pct(anchor, compute['GPT-4'] + 2)))
+    print('1000x GPT4 can do it: {}'.format(get_anchor_gpt_benchmark_pct(anchor, compute['GPT-4'] + 3)))
 
 
 def tai_log_flop_needs(brain, efficiency=0, transformative_vs_human=0, horizon_length=0, scaling_exponent=0,
@@ -46,8 +48,8 @@ def cotra_bayes_update_against_low_flop(f):
 @np.vectorize
 def peter_bayes_update_against_low_flop(f):
     f = f + ~sq.lognorm(1,3) if f < 26 else f
-    f = f + ~sq.lognorm(1,4) if f < 25 else f
-    f = f + ~sq.lognorm(2,5) if f < 24 else f
+    f = f + ~sq.lognorm(2,4) if f < 25 else f
+    f = f + ~sq.lognorm(3,5) if f < 24 else f
     f = 24 if f < 24 else f
     return f
 
