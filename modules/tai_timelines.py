@@ -54,8 +54,8 @@ def plot_data(years, data_20, data_50, data_80, label, add_gpts=False):
     plt.ylabel(label)
     plt.show()
 
-    if max(years) > 2042:
-        idx = next(i for i, value in enumerate(years) if value > 2042)
+    if max(years) > 2036:
+        idx = next(i for i, value in enumerate(years) if value > 2036)
         plt.plot(years[:idx], np.log10(data_20[:idx]), linestyle='dashed', color='black')
         plt.plot(years[:idx], np.log10(data_50[:idx]), color='black')
         plt.plot(years[:idx], np.log10(data_80[:idx]), linestyle='dashed', color='black')
@@ -358,8 +358,8 @@ def print_tai_arrival_stats(tai_years, variables):
         return round(r * 100, 1)
 
 
-    year_pairs = [[variables['CURRENT_YEAR'] + 1, variables['CURRENT_YEAR'] + 2],
-                  [variables['CURRENT_YEAR'] + 3, variables['CURRENT_YEAR'] + 5],
+    year_pairs = [[variables['CURRENT_YEAR'], variables['CURRENT_YEAR'] + 1],
+                  [variables['CURRENT_YEAR'] + 2, variables['CURRENT_YEAR'] + 4],
                   [2030, 2034],
                   [2035, 2039],
                   [2040, 2049],
@@ -371,7 +371,6 @@ def print_tai_arrival_stats(tai_years, variables):
                   [2100, 2109],
                   [2110, 2119]]
     year_pairs = [y for y in year_pairs if y[0] < variables['MAX_YEAR'] and y[1] < variables['MAX_YEAR']]
-    print('This year: {}%'.format(bin_tai_yrs(hi=variables['CURRENT_YEAR'])))
     for y in year_pairs:
         print('{}-{}: {}%'.format(y[0], y[1], bin_tai_yrs(y[0], y[1])))
     print('>{}: {}%'.format(variables['MAX_YEAR'], bin_tai_yrs(low=variables['MAX_YEAR'])))
