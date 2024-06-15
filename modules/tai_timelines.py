@@ -38,15 +38,16 @@ def plot_tai(plt, years, cost_of_tai_collector, willingness_collector):
     return plt
 
 
-def plot_data(years, data_20, data_50, data_80, label, add_gpts=False):
-    plt.plot(years, np.log10(data_20), linestyle='dashed', color='black')
-    plt.plot(years, np.log10(data_50), color='black')
-    plt.plot(years, np.log10(data_80), linestyle='dashed', color='black')
+def plot_data(years, data_20, data_50, data_80, label, add_gpts=False, log=True):
+    log_ = np.log10 if log else lambda x: x
+    plt.plot(years, log_(data_20), linestyle='dashed', color='black')
+    plt.plot(years, log_(data_50), color='black')
+    plt.plot(years, log_(data_80), linestyle='dashed', color='black')
 
     plt.gca().xaxis.set_major_locator(plt.MultipleLocator(10))
     offset = (plt.gca().get_ylim()[1] - plt.gca().get_ylim()[0]) / 40
 
-    for year, value in zip(years, np.log10(data_50)):
+    for year, value in zip(years, log_(data_50)):
         if year % 10 == 0:
             plt.scatter(year, value, color='black', s=30)
             plt.text(year, value + offset, f'{value:.1f}', fontsize=8, ha='center')
@@ -54,22 +55,20 @@ def plot_data(years, data_20, data_50, data_80, label, add_gpts=False):
     plt.ylabel(label)
     plt.show()
 
-    if max(years) > 2036:
-        idx = next(i for i, value in enumerate(years) if value > 2036)
-        plt.plot(years[:idx], np.log10(data_20[:idx]), linestyle='dashed', color='black')
-        plt.plot(years[:idx], np.log10(data_50[:idx]), color='black')
-        plt.plot(years[:idx], np.log10(data_80[:idx]), linestyle='dashed', color='black')
+    if max(years) > 2030:
+        idx = next(i for i, value in enumerate(years) if value > 2030)
+        plt.plot(years[:idx], log_(data_20[:idx]), linestyle='dashed', color='black')
+        plt.plot(years[:idx], log_(data_50[:idx]), color='black')
+        plt.plot(years[:idx], log_(data_80[:idx]), linestyle='dashed', color='black')
 
         plt.gca().xaxis.set_major_locator(plt.MultipleLocator(2))
         offset = (plt.gca().get_ylim()[1] - plt.gca().get_ylim()[0]) / 40
 
-        for year, value in zip(years[:idx], np.log10(data_50[:idx])):
-            if year % 2 == 0:
-                plt.scatter(year, value, color='black', s=30)
-                plt.text(year, value + offset, f'{value:.1f}', fontsize=8, ha='center')
+        for year, value in zip(years[:idx], log_(data_50[:idx])):
+            plt.scatter(year, value, color='black', s=30)
+            plt.text(year, value + offset, f'{value:.1f}', fontsize=8, ha='center')
 
         plt.ylabel(label)
-        #plt.ylim([int(np.floor(min(np.log10(data_20[:idx])) - 1)), int(np.ceil(max(np.log10(data_80[:idx])) + 1))])
         plt.show()
 
     return None
@@ -574,28 +573,28 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
 
     print('')
     print('')
-    print('## Willingness to Pay Over Time ##')
+    print('## Willingness to Pay Over Time (Total infrastructure) ##')
     willingness_50 = np.array([willingness_to_pay(initial_gdp=initial_gdp_p[50],
                                                   gdp_growth=gdp_growth_p[50],
                                                   initial_pay=10 ** initial_pay_p[50],
                                                   spend_doubling_time=spend_doubling_time_p[50],
                                                   max_gdp_frac=max_gdp_frac_p[50],
-                                                  year=(y - variables['CURRENT_YEAR'])) for y in years])
+                                                  year=(y - variables['CURRENT_YEAR'])) for y in years]) * 25
     willingness_20 = np.array([willingness_to_pay(initial_gdp=initial_gdp_p[20],
                                                   gdp_growth=gdp_growth_p[20],
                                                   initial_pay=10 ** initial_pay_p[20],
                                                   spend_doubling_time=spend_doubling_time_p[20],
                                                   max_gdp_frac=max_gdp_frac_p[20],
-                                                  year=(y - variables['CURRENT_YEAR'])) for y in years])
+                                                  year=(y - variables['CURRENT_YEAR'])) for y in years]) * 10
     willingness_80 = np.array([willingness_to_pay(initial_gdp=initial_gdp_p[80],
                                                   gdp_growth=gdp_growth_p[80],
                                                   initial_pay=10 ** initial_pay_p[80],
                                                   spend_doubling_time=spend_doubling_time_p[80],
                                                   max_gdp_frac=max_gdp_frac_p[80],
-                                                  year=(y - variables['CURRENT_YEAR'])) for y in years])
+                                                  year=(y - variables['CURRENT_YEAR'])) for y in years]) * 80
 
     for y in target_years:
-        outstr = 'Year: {} - willingness log 2024$USD per year {} (~{}) 80% CI {} (~{}) - {} (~{})'
+        outstr = 'Year: {} - willingness log 2024$USD per year for total infrastructure {} (~{}) 80% CI {} (~{}) - {} (~{})'
         print(outstr.format(y,
                             np.round(np.log10(willingness_50[y - variables['CURRENT_YEAR']]), 1),
                             numerize(willingness_50[y - variables['CURRENT_YEAR']]),
@@ -603,8 +602,24 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                             numerize(willingness_20[y - variables['CURRENT_YEAR']]),
                             np.round(np.log10(willingness_80[y - variables['CURRENT_YEAR']]), 1),
                             numerize(willingness_80[y - variables['CURRENT_YEAR']])))
-    plot_data(years, willingness_20, willingness_50, willingness_80, 'WTP (log 2024$USD/yr)')
+    plot_data(years, willingness_20 / 1e9, willingness_50 / 1e9, willingness_80 / 1e9, 'WTP infra (billions of 2024$USD/yr)', log=False)
 
+    print('')
+    print('')
+    print('## Willingness to Pay Over Time (Largest single model) ##')
+    willingness_50 = willingness_50 / 25
+    willingness_20 = willingness_20 / 10
+    willingness_80 = willingness_80 / 80
+    for y in target_years:
+        outstr = 'Year: {} - willingness log 2024$USD per year for largest single model {} (~{}) 80% CI {} (~{}) - {} (~{})'
+        print(outstr.format(y,
+                            np.round(np.log10(willingness_50[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(willingness_50[y - variables['CURRENT_YEAR']]),
+                            np.round(np.log10(willingness_20[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(willingness_20[y - variables['CURRENT_YEAR']]),
+                            np.round(np.log10(willingness_80[y - variables['CURRENT_YEAR']]), 1),
+                            numerize(willingness_80[y - variables['CURRENT_YEAR']])))
+    plot_data(years, willingness_20 / 1e9, willingness_50 / 1e9, willingness_80 / 1e9, 'WTP model (billions of 2024$USD/yr)', log=False)
 
     print('')
     print('')
