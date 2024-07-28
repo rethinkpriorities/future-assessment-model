@@ -334,7 +334,7 @@ def print_graph(pctiles, samples, label, reverse=False, digits=1):
 
 def print_tai_arrival_stats(tai_years, variables):
     print('## DISTRIBUTION OF TAI ARRIVAL DATE ##')
-    pctiles = sq.get_percentiles(tai_years, percentiles=[5, 10, 15, 20, 25, 35, 50, 60, 75, 80, 90, 95])
+    pctiles = sq.get_percentiles(tai_years, percentiles=[1, 2, 3, 4, 5, 10, 15, 20, 25, 35, 50, 60, 75, 80, 90, 95])
     pprint([str(o[0]) + '%: ' + (str(int(o[1])) if o[1] < variables['MAX_YEAR'] else '>' + str(variables['MAX_YEAR'])) for o in pctiles.items()])
     print('')
     print('')
