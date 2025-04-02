@@ -559,7 +559,7 @@ def run_timelines_model(variables, cores=1, runs=10000, load_cache_file=None,
                            year=(y - variables['CURRENT_YEAR'])) for y in years])
 
 
-    target_years = years[:10] + [2035, 2040, 2050, 2060, 2070, 2100]
+    target_years = years
     for y in target_years:
         outstr = 'Year: {} - GDP log 2024$USD {} (~{}) 80% CI {} (~{}) - {} (~{})'
         print(outstr.format(y,
